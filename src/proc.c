@@ -5,6 +5,10 @@
 #include <unistd.h>
 
 /*
+    How-to: give the first 4 arguments to configure processes
+    Example: gcc proc.c -lm
+             ./a.out 10 0.01 400 10
+
     Construct an array of processes using the structure below
         - First 4 arguments are needed to create processes
         - Random arrival and burst times based on exponential distribution
@@ -13,7 +17,7 @@
 typedef struct
 {
     char id;            // name of the proc
-    int stat;           // status {0: new, 1: ready, 2: running, 3: blocking}
+    int stat;           // status {0: new, 1: ready, 2: running, 3: blocking, 4:                            completed}
     int cpu_b;          // number of cpu bursts it has
     int arrival_t;      // arrival time
     int cpu_t[100];     // length of each burst
@@ -22,12 +26,12 @@ typedef struct
 
 double * gen_rands (int * seed, int iterations, int ub, double lambda, double * times);
 
-int main (int argc, char * argv[])
+int gen_procs (Proc * procs, char * argv[])
 {
     int seed = strtol(argv[1], NULL, 10); // (int) argv[1]
-    double lambda = 0.01; //(double) argv[2]
-    int ub = 300; // (int) argv[3]
-    int procs_num = 10; // (int) argv[4]    
+    double lambda = strtod(argv[2], NULL); //(double) argv[2]
+    int ub = strtol(argv[3], NULL, 10); // argv[3]
+    int procs_num = strtol(argv[4], NULL, 10);  // argv[4]  
     printf("seed = %u\n", seed);
     int iterations = 100000;
     
@@ -37,7 +41,6 @@ int main (int argc, char * argv[])
     gen_rands(&seed, iterations, ub, lambda, times);
 
     // Generate processes
-    Proc procs[procs_num];
     for (int i = 0; i < procs_num; i++)
     {
         procs[i].id = i + 'A';
@@ -70,6 +73,7 @@ int main (int argc, char * argv[])
     printf("proc[%c] cpu bursts = %d\n", procs[i].id, procs[i].cpu_b);
 #endif
     }
+    return 0;
 }
 
 double * gen_rands (int * seed, int iterations, int ub, double lambda, double * times)
@@ -84,5 +88,12 @@ double * gen_rands (int * seed, int iterations, int ub, double lambda, double * 
        *seed += 1;
    } 
    return times;
+}
+
+int main (int argc, char * argv[])
+{
+    int procs_num = strtol(argv[4], NULL, 10);
+    Proc procs[procs_num];
+    gen_procs(procs, argv);
 }
 
