@@ -34,17 +34,15 @@ void cxt_s_in (Proc * proc[], int cs_t, int procs_num, int t);
 void cxt_s_out (Proc * proc, int cs_t);
 
 
-int gen_procs (Proc * procs, char * argv[])
+void gen_procs(Proc *procs, char *argv[])
 {
-    int seed = strtol(argv[1], NULL, 10); // (int) argv[1]
-    double lambda = strtod(argv[2], NULL); //(double) argv[2]
-    int ub = strtol(argv[3], NULL, 10); // argv[3]
-    int procs_num = strtol(argv[4], NULL, 10);  // argv[4]  
-#if 0
+    int seed = strtol(argv[1], NULL, 10);      // (int) argv[1]
+    double lambda = strtod(argv[2], NULL);     //(double) argv[2]
+    int ub = strtol(argv[3], NULL, 10);        // argv[3]
+    int procs_num = strtol(argv[4], NULL, 10); // argv[4]
     printf("seed = %u\n", seed);
-#endif
-    int iterations = 10000;
-    
+    int iterations = 100000;
+
     // Generate random variables
     double times[iterations];
     int t_ctr = 0;
@@ -62,7 +60,7 @@ int gen_procs (Proc * procs, char * argv[])
         procs[i].arrival_t = trunc(times[t_ctr++]);
         procs[i].arrival_t_static = procs[i].arrival_t;
         for (int j = 0; j < procs[i].cpu_b; j++)
-        {   
+        {
             if (ceil(times[t_ctr]) <= ub)
                 procs[i].cpu_t[j] = ceil(times[t_ctr++]);
             else
@@ -85,24 +83,8 @@ int gen_procs (Proc * procs, char * argv[])
 #if 1
     printf("proc[%c] cpu bursts = %d\n", procs[i].id, procs[i].cpu_b);
     printf("proc[%c] arrival time = %d\n", procs[i].id, procs[i].arrival_t);
-
 #endif
     }
-    return 0;
-}
-
-double * gen_rands (int * seed, int iterations, int ub, double lambda, double * times)
-{
-   for (int i = 0; i < iterations; i++)
-   {
-       srand48(*seed);
-       double r = drand48();
-       double x = - log(r) / lambda; 
-       if (x > ub) { x = ub; }
-       times[i] = x;
-       *seed += 1;
-   } 
-   return times;
 }
 
 // Policy for "Ties"
@@ -306,3 +288,19 @@ int main (int argc, char * argv[])
 #endif
 }
 
+double *gen_rands(int *seed, int iterations, int ub, double lambda, double *times)
+{
+    for (int i = 0; i < iterations; i++)
+    {
+        srand48(*seed);
+        double r = drand48();
+        double x = -log(r) / lambda;
+        if (x > ub)
+        {
+            x = ub;
+        }
+        times[i] = x;
+        *seed += 1;
+    }
+    return times;
+}
