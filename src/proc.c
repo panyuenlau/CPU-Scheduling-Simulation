@@ -4,6 +4,7 @@
 #include <math.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <string.h>
 
 /*
     How-to: give the first 4 arguments to configure processes
@@ -29,15 +30,27 @@ typedef struct
     int wait_t;         // keep track of wait time
 } Proc;
 
-double * gen_rands (int * seed, int iterations, int ub, double lambda, double * times);
-void cxt_s_in (Proc * proc[], int cs_t, int procs_num, int t);
-void cxt_s_out (Proc * proc, int cs_t);
 
+void gen_rands(int *seed, int iterations, int ub, double lambda, double *times)
+{
+    for (int i = 0; i < iterations; i++)
+    {
+        srand48(*seed);
+        double r = drand48();
+        double x = -log(r) / lambda;
+        if (x > ub)
+        {
+            x = ub;
+        }
+        times[i] = x;
+        *seed += 1;
+    }
+}
 
 void gen_procs(Proc *procs, char *argv[])
 {
     int seed = strtol(argv[1], NULL, 10);      // (int) argv[1]
-    double lambda = strtod(argv[2], NULL);     //(double) argv[2]
+    double lambda = strtod(argv[2], NULL);     // (double) argv[2]
     int ub = strtol(argv[3], NULL, 10);        // argv[3]
     int procs_num = strtol(argv[4], NULL, 10); // argv[4]
     printf("seed = %u\n", seed);
@@ -47,14 +60,13 @@ void gen_procs(Proc *procs, char *argv[])
     double times[iterations];
     int t_ctr = 0;
     gen_rands(&seed, iterations, ub, lambda, times);
-
     // Generate processes
     for (int i = 0; i < procs_num; i++)
     {
         procs[i].id = i + 'A';
         procs[i].stat = 0;
         srand48(seed);
-        procs[i].cpu_b = trunc(drand48() * 100);
+        procs[i].cpu_b = trunc(drand48() * 100) + 1; // CPU burst range: [1, 100]
         procs[i].cpu_b_static = procs[i].cpu_b;
         seed += 1;
         procs[i].arrival_t = trunc(times[t_ctr++]);
@@ -75,12 +87,12 @@ void gen_procs(Proc *procs, char *argv[])
                 procs[i].io_t[j] = ub;
                 t_ctr++;
             }
-#if 1
-    printf("cpu_t = %d\n", procs[i].cpu_t[j]);
-    printf("io_t  = %d\n", procs[i].io_t[j]);
+#if 0
+    printf("cpu_t = %d %d\n", j, procs[i].cpu_t[j]);
+    printf("io_t  = %d %d\n", j, procs[i].io_t[j]);
 #endif
         }
-#if 1
+#if 0
     printf("proc[%c] cpu bursts = %d\n", procs[i].id, procs[i].cpu_b);
     printf("proc[%c] arrival time = %d\n", procs[i].id, procs[i].arrival_t);
 #endif
@@ -142,9 +154,13 @@ void append_ready_queue (Proc * ready_procs[], Proc * procs, int procs_num, int 
 #if 1
     char q[procs_num+1];
     get_Q(ready_procs, procs_num, q);
-    printf("time <%d>ms: <Process[%c]: arrival> [Q <%s>]\n", t, ready[i].id, q);
+    if (strlen(q) == 0)
+        printf("time %dms: Process %c arrived; added to ready queue [Q <empty>]\n", t, ready[i].id);
+    else
+        printf("time %dms: Process %c arrived; added to ready queue [Q %s]\n", t, ready[i].id, q);
+
     if (io == true)
-        printf("time <%d>ms: <Process[%c]: finishes performing I/O> [Q <%s>]\n", t, ready[i].id, q);
+        printf("time %dms: Process %c finishes performing I/O [Q %s]\n", t, ready[i].id, q);
 #endif
         *ctr_ready += 1;
     }
@@ -173,7 +189,7 @@ void check_proc_completion (Proc * ready[], int procs_num, int * ctr_ready, int 
 #if 1
     char q[procs_num+1];
     get_Q(ready, procs_num, q);
-    printf("time <%d>ms: <Process[%c]: terminates by finishing its last CPU busrt> [Q <%s>]\n", t, ready[0]->id, q);
+    printf("time %dms: Process[%c] terminates by finishing its last CPU busrt [Q <%s>]\n", t, ready[0]->id, q);
 #endif
         }
         else
@@ -187,8 +203,8 @@ void check_proc_completion (Proc * ready[], int procs_num, int * ctr_ready, int 
 #if 1
     char q[procs_num+1];
     get_Q(ready, procs_num, q);
-    printf("time <%d>ms: <Process[%c]: finishes using the CPU> [Q <%s>]\n", t, ready[0]->id, q);
-    printf("time <%d>ms: <Process[%c]: starts performing I/O> [Q <%s>]\n", t, ready[0]->id, q);
+    printf("time %dms: Process[%c] finishes using the CPU [Q <%s>]\n", t, ready[0]->id, q);
+    printf("time %dms: Process[%c] starts performing I/O [Q <%s>]\n", t, ready[0]->id, q);
 #endif
         }
         
@@ -210,7 +226,10 @@ void cxt_s_in (Proc * proc[], int cs_t, int procs_num, int t)
 #if 1
     char q[procs_num+1];
     get_Q(proc, procs_num, q);
-    printf("time <%d>ms: <Process[%c]: starts using the CPU> [Q <%s>]\n", t, proc[0]->id, q);
+    if (strlen(q) == 0)
+        printf("time %dms: Process[%c] started using the CPU [Q <empty>]\n", t, proc[0]->id);
+    else
+        printf("time %dms: Process[%c] started using the CPU [Q <%s>]\n", t, proc[0]->id, q);
 #endif
 }
 
@@ -232,6 +251,18 @@ void check_burst (Proc * proc, int cs_t, int t)
 // ----------------------------------------------------------------
 int main (int argc, char * argv[])
 {
+    /* Command line arugments:
+    * argv[1]: seed for random number generator;
+    * argv[2]: lambda, for exponential distribution
+    * argv[3]: upper bound for valid pseudo-random numbers
+    * argv[4]: PID's, A--Z
+    * argv[5]: t_cs, context switch time
+    * argv[5]: n, number processes to simulate
+    * argv[6]: alpha, used to estimate CPU burst times for SJF and SRT
+    * argv[7]: t_slice, time slice for RR algorithm
+    * argv[8]: rr_add, define whether processes are added to the end or beginning of the ready queue
+    */
+
     int procs_num = strtol(argv[4], NULL, 10);
     int cs_t = strtol(argv[5], NULL, 10);
     Proc procs[procs_num];
@@ -286,21 +317,4 @@ int main (int argc, char * argv[])
 #if 1
     printf("End of simulation\n");
 #endif
-}
-
-double *gen_rands(int *seed, int iterations, int ub, double lambda, double *times)
-{
-    for (int i = 0; i < iterations; i++)
-    {
-        srand48(*seed);
-        double r = drand48();
-        double x = -log(r) / lambda;
-        if (x > ub)
-        {
-            x = ub;
-        }
-        times[i] = x;
-        *seed += 1;
-    }
-    return times;
 }
