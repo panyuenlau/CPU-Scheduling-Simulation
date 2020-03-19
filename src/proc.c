@@ -13,6 +13,20 @@
 
     TODO: Fix <empty> related terminal outputs.
 */
+/*
+*   Brief Manual - Operations of each function
+*   ready queue is managed as an array of ptrs to Process structs
+*   1. append_ready_queue()
+*       traverse the array of processes
+*       if the process->arrival_t is equal to current time
+*           add a ptr of the process to ready queue[]
+*           change the process->stat to 2(ready)
+*           
+*        (TODO: "ties" are sorted) !!!but never checked the correctness
+*   
+*       
+*   
+*/
 typedef struct
 {
     char id;            // name of the proc
