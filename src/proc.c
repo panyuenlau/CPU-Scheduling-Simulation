@@ -7,14 +7,11 @@
 #include <string.h>
 
 /*
-    How-to: give the first 4 arguments to configure processes
+    How-to: give the first 5 arguments to configure processes
     Example: gcc proc.c -lm
-             ./a.out 10 0.01 400 10
+             ./a.out 10 0.01 400 10 256
 
-    Construct an array of processes using the structure below
-        - First 4 arguments are needed to create processes
-        - Random arrival and burst times based on exponential distribution
-        TODO: how seed needed to be manipulated
+    TODO: Fix <empty> related terminal outputs.
 */
 typedef struct
 {
@@ -36,9 +33,9 @@ double get_rand(int ub, double lambda)
     double r = drand48();
     double x = -log(r) / lambda;
 
-    if (x > ub)
+    while (x > ub)
     {
-        x = ub;
+        return get_rand(ub, lambda);
     }
 
     return x;
@@ -66,7 +63,10 @@ void gen_procs(Proc *procs, int seed, int procs_num, int ub, double lambda)
         for (int j = 0; j < procs[i].cpu_b; j++)
         {
             procs[i].cpu_t[j] = ceil(get_rand(ub, lambda));
-            procs[i].io_t[j] = ceil(get_rand(ub, lambda));
+            if (j == procs[i].cpu_b - 1)
+                procs[i].io_t[j] = 0;
+            else
+                procs[i].io_t[j] = ceil(get_rand(ub, lambda));
         }
 #if 0
     printf("proc[%c] cpu bursts = %d\n", procs[i].id, procs[i].cpu_b);
@@ -148,7 +148,7 @@ void FCFS_SJF_burst_begin (Proc * proc, int t)
     proc->stat = 4;
     proc->cpu_b -= 1;
     proc->arrival_t = t + proc->cpu_t[0];
-    for (int i = 0; i < proc->cpu_b - 1; i++)
+    for (int i = 0; i < proc->cpu_b; i++)
     {
         proc->cpu_t[i] = proc->cpu_t[i+1];
     }
@@ -180,7 +180,7 @@ int check_proc_completion (Proc * ready[], int procs_num, int * ctr_ready, int t
             rc = 2;
             ready[0]->stat = 3;
             ready[0]->arrival_t = t + ready[0]->io_t[0];
-            for (int i = 0; i < ready[0]->cpu_b - 1; i++)
+            for (int i = 0; i < ready[0]->cpu_b; i++)
             {
                 ready[0]->io_t[i] = ready[0]->io_t[i+1];
             }
@@ -204,7 +204,7 @@ void cxt_s_out (Proc * proc, int cs_t)
 int check_burst (Proc * proc, int cs_t, int t)
 {
     if (proc->stat == 4 && proc->arrival_t == t)
-    {
+    {   
         cxt_s_out(proc, cs_t);
         return 1;
     }
@@ -281,14 +281,21 @@ int main (int argc, char * argv[])
                         get_Q(ready, procs_num, q);
                         if (strlen(q) == 0)
                         {
-                            printf("time %dms: Process[%c] completed a CPU burst; %d bursts to go [Q <empty>]\n", t, ready[0]->id, ready[0]->cpu_b);
-                             printf("time %dms: Process[%c] switching out of CPU; will block on I/O until time %dms [Q <empty>]\n", t, ready[0]->id, ready[0]->arrival_t + ready[0]->io_t[0]);
-
+                            if (ready[0]->cpu_b != 0)
+                            {
+                                printf("time %dms: Process %c completed a CPU burst; %d bursts to go [Q <empty>]\n", t, ready[0]->id, ready[0]->cpu_b);
+                                printf("time %dms: Process %c switching out of CPU; will block on I/O until time %dms [Q <empty>]\n", t, ready[0]->id, ready[0]->arrival_t + ready[0]->io_t[0]);
+                            }
+                            else 
+                                printf("time %dms: Process %c terminated [Q <empty>]\n", t, ready[0]->id);
                         }
                         else
                         {
-                            printf("time %dms: Process[%c] completed a CPU burst; %d bursts to go [Q <%s>]\n", t, ready[0]->id, ready[0]->cpu_b, q);
-                            printf("time %dms: Process[%c] switching out of CPU; will block on I/O until time %dms [Q <%s>]\n", t, ready[0]->id, ready[0]->arrival_t + ready[0]->io_t[0], q);
+                            printf("time %dms: Process %c completed a CPU burst; %d bursts to go [Q <%s>]\n", t, ready[0]->id, ready[0]->cpu_b, q);
+                            printf("time %dms: Process %c switching out of CPU; will block on I/O until time %dms [Q <%s>]\n", t, ready[0]->id, ready[0]->arrival_t + ready[0]->io_t[0], q);
+                            
+                            if (ready[0] -> cpu_b == 0)
+                                printf("time %dms: Process %c terminated [Q <%s>]\n", t, ready[0]->id, q);
                         }
                     }
                     int rc = check_proc_completion(ready, procs_num, &ctr_ready, t);
@@ -296,10 +303,6 @@ int main (int argc, char * argv[])
                     {   
                         char q[procs_num+1];
                         get_Q(ready, procs_num, q);
-                        if (strlen(q) == 0)
-                            printf("time %dms: Process[%c] terminates by finishing its last CPU busrt [Q <%s>]\n", t, ready[0]->id, q);
-                        else
-                            printf("time %dms: Process[%c] terminates by finishing its last CPU busrt [Q <empty>]\n", t, ready[0]->id);
                         rm_running_proc(ready, procs_num, &ctr_ready);
                     }
                     else if (rc == 2)
@@ -319,14 +322,14 @@ int main (int argc, char * argv[])
                         char q[procs_num+1];
                         get_Q(ready, procs_num, q);
                         if (strlen(q) == 0)
-                            printf("time %dms: Process[%c] started using the CPU for %dms burst [Q <empty>]\n", t, ready[0]->id, ready[0]->arrival_t - t);
+                            printf("time %dms: Process %c started using the CPU for %dms burst [Q <empty>]\n", t, ready[0]->id, ready[0]->arrival_t - t);
                         else
-                            printf("time %dms: Process[%c] started using the CPU for %dms burst [Q <%s>]\n", t, ready[0]->id, ready[0]->arrival_t - t, q);
+                            printf("time %dms: Process %c started using the CPU for %dms burst [Q <%s>]\n", t, ready[0]->id, ready[0]->arrival_t - t, q);
                     }
                 }
                 t++;
             }
-            printf("time %dms: Simulator ended for FCFS [Q <empty>]\n", t);
-        } 
+            printf("time %dms: Simulator ended for FCFS [Q <empty>]\n", --t);
+        }
     }
 }
