@@ -11,7 +11,6 @@
     Example: gcc proc.c -lm
              ./a.out 10 0.01 400 10 256
 
-    TODO: Fix <empty> related terminal outputs.
 */
 /*
 *   Brief Manual - Operations of each function
@@ -39,6 +38,8 @@ typedef struct
     int arrival_t_static; // reserved for final calculation
     int burst_t;        // keep track of burst time
     int wait_t;         // keep track of wait time
+    int tau;            // estimated burst time
+    int sample_t;        // actual burst time
 } Proc;
 
 
@@ -82,10 +83,8 @@ void gen_procs(Proc *procs, int seed, int procs_num, int ub, double lambda)
             else
                 procs[i].io_t[j] = ceil(get_rand(ub, lambda));
         }
-#if 0
-    printf("proc[%c] cpu bursts = %d\n", procs[i].id, procs[i].cpu_b);
-    printf("proc[%c] arrival time = %d\n", procs[i].id, procs[i].arrival_t);
-#endif
+        procs[i].tau = 1 / lambda;
+        procs[i].sample_t = 0;
     }
 }
 
@@ -135,7 +134,9 @@ void append_io_to_ready_queue (Proc * ready_procs[], Proc * procs, int procs_num
         }
     }
     if (ctr > 1)
+    {
         qsort(ready, ctr, sizeof(Proc), sort);
+    }
     for (int i = 0; i < ctr; i++)
     {
         ready_procs[*ctr_ready] = &procs[(int)ready[i].id - 65];
@@ -173,7 +174,30 @@ void append_new_to_ready_queue (Proc * ready_procs[], Proc * procs, int procs_nu
     }
 }
 
-void FCFS_SJF_burst_begin (Proc * proc, int t)
+void SJF_sort (Proc * ready[], int ctr_ready)
+{
+    int i = 0;
+    if (ready[0] == NULL)
+        return;
+    if (ready[0]->stat != 2)
+        i = 1;
+    Proc * p;
+    for (; i < ctr_ready - 1; i++)
+    {
+        for (int j = 0; j < ctr_ready-i-1; j++)
+        {
+            if (ready[j]->tau > ready[j+1]->tau)
+            {
+                // swap
+                p = ready[j];
+                ready[j] = ready[j+1];
+                ready[j+1] = p;
+            }
+        }
+    }
+}
+
+void burst_begin (Proc * proc, int t)
 {
     if (proc->stat != 5 || proc->cpu_b == 0)
         perror("ERROR: <Invalid Ready Queue.>");
@@ -264,6 +288,8 @@ int main (int argc, char * argv[])
     int ub = strtol(argv[3], NULL, 10);        // argv[3]
     int procs_num = strtol(argv[4], NULL, 10); // argv[4]
     int cs_t = strtol(argv[5], NULL, 10);      // argv[5]
+    // float alpha = strtof(argv[6], NULL);       // argv[6]
+
 
     char *scheduling_algos[4] = {"FCFS", "SJF", "SRT", "RR"};
 
@@ -278,8 +304,43 @@ int main (int argc, char * argv[])
         Proc * ready[procs_num];
         for (int i = 0; i < procs_num; i++)
             ready[i] = NULL;
-        int ctr_ready = 0;
+        int ctr_ready = 0;                      // number of procs in ready[] array
+#if 0
+        if (strcmp(scheduling_algos[k], "SJF") == 0)
+        {
+            for (int procs_ctr = 0; procs_ctr < procs_num; procs_ctr++)
+            {
+                if (procs[procs_ctr].cpu_b > 1)
+                    printf("Process %c [NEW] (arrival time %d ms) %d CPU bursts\n", procs[procs_ctr].id, 
+                    procs[procs_ctr].arrival_t, procs[procs_ctr].cpu_b);
+                else
+                {
+                    printf("Process %c [NEW] (arrival time %d ms) %d CPU burst\n", procs[procs_ctr].id, 
+                    procs[procs_ctr].arrival_t, procs[procs_ctr].cpu_b);
+                }
+                
+            }
+            printf("time %dms: Simulator started for FCFS [Q <empty>]\n", t);
 
+            // Time starts
+            while (1)
+            {
+                // Step 1: Check if all processes complete
+                temp = 0;
+                for (int i = 0; i < procs_num; i++)
+                {
+                    if (procs[i].stat == 1)
+                        temp++;
+                }
+                if (temp == procs_num)
+                    break;
+
+                // Step 1.5: Check the ready queue (and begin to burst) before appending new ready procs
+
+            }
+            
+        }
+#endif
         if(strcmp(scheduling_algos[k], "FCFS") == 0)
         {
             for (int procs_ctr = 0; procs_ctr < procs_num; procs_ctr++)
@@ -300,7 +361,6 @@ int main (int argc, char * argv[])
             while (1)
             {
                 // Step 1: Check if all processes complete
-                // TODO: Check synchronously as each process done
                 temp = 0;
                 for (int i = 0; i < procs_num; i++)
                 {
@@ -319,7 +379,7 @@ int main (int argc, char * argv[])
                     }
                     if (ready[0]->stat == 5 && ready[0]->arrival_t == t)
                     {
-                        FCFS_SJF_burst_begin(ready[0], t);
+                        burst_begin(ready[0], t);
                         char q[60];
                         get_Q(ready, procs_num, q);
                         if (strlen(q) == 0)
@@ -329,11 +389,7 @@ int main (int argc, char * argv[])
                     }
                 }
 
-                // Step 2: Fill in the ready queue
-                
-                
-
-                // Step 3: Check if CPU burst/context switch completes
+                // Step 2: Check if CPU burst/context switch completes
                 if (ready[0] != NULL)
                 {
                     if (check_burst(ready[0], cs_t, t) == 1)
@@ -378,6 +434,8 @@ int main (int argc, char * argv[])
                     }
                 }
                 
+                
+                // Step 2: Fill in the ready queue
                 append_io_to_ready_queue(ready, procs, procs_num, &ctr_ready, t);
                 append_new_to_ready_queue(ready, procs, procs_num, &ctr_ready, t);
 
@@ -390,7 +448,7 @@ int main (int argc, char * argv[])
                     }
                     if (ready[0]->stat == 5 && ready[0]->arrival_t == t)
                     {
-                        FCFS_SJF_burst_begin(ready[0], t);
+                        burst_begin(ready[0], t);
                         char q[60];
                         get_Q(ready, procs_num, q);
                         if (strlen(q) == 0)
