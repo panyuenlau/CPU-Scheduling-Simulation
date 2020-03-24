@@ -318,7 +318,7 @@ int main (int argc, char * argv[])
         for (int i = 0; i < procs_num; i++)
             ready[i] = NULL;
         int ctr_ready = 0;  // number of procs in ready[] array
-#if 1
+#if 0
         if (strcmp(scheduling_algos[k], "SJF") == 0)
         {
             for (int procs_ctr = 0; procs_ctr < procs_num; procs_ctr++)
@@ -489,7 +489,7 @@ int main (int argc, char * argv[])
             printf("time %dms: Simulator ended for SJF [Q <empty>]\n", --t);
         }
 #endif
-#if 0
+#if 1
         if(strcmp(scheduling_algos[k], "FCFS") == 0)
         {
             for (int procs_ctr = 0; procs_ctr < procs_num; procs_ctr++)
