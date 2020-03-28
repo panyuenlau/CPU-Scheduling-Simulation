@@ -34,7 +34,7 @@ void FCFS(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_rea
             {
                 burst_begin(ready[0], t);
                 char q[60];
-                get_Q(ready, procs_num, q);
+                get_Q(ready, procs_num, q, false);
                 if (strlen(q) == 0)
                     printf("time %dms: Process %c started using the CPU for %dms burst [Q <empty>]\n", t, ready[0]->id, ready[0]->arrival_t - t);
                 else
@@ -49,7 +49,7 @@ void FCFS(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_rea
             if (last_tau)
             {
                 char q[60];
-                get_Q(ready, procs_num, q);
+                get_Q(ready, procs_num, q, false);
                 if (strlen(q) == 0)
                 {
                     if (ready[0]->cpu_b == 1)
@@ -96,7 +96,7 @@ void FCFS(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_rea
             if (ready[i] == NULL)
                 break;
             char q[60];
-            get_Q(ready, procs_num, q);
+            get_Q(ready, procs_num, q, false);
             printf("time %dms: Process %c completed I/O; added to ready queue [Q %s]\n", t, ready[i]->id, q);
         }
         start = append_new_to_ready_queue(ready, procs, procs_num, &ctr_ready, t);
@@ -105,7 +105,7 @@ void FCFS(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_rea
             if (ready[i] == NULL)
                 break;
             char q[60];
-            get_Q(ready, procs_num, q);
+            get_Q(ready, procs_num, q, false);
             printf("time %dms: Process %c arrived; added to ready queue [Q %s]\n", t, ready[i]->id, q);
         }
 
@@ -120,7 +120,7 @@ void FCFS(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_rea
             {
                 burst_begin(ready[0], t);
                 char q[60];
-                get_Q(ready, procs_num, q);
+                get_Q(ready, procs_num, q, false);
                 if (strlen(q) == 0)
                     printf("time %dms: Process %c started using the CPU for %dms burst [Q <empty>]\n", t, ready[0]->id, ready[0]->arrival_t - t);
                 else
@@ -129,5 +129,5 @@ void FCFS(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_rea
         }
         t++;
     }
-    printf("time %dms: Simulator ended for FCFS [Q <empty>]\n\n", --t);
+    printf("time %dms: Simulator ended for FCFS [Q <empty>]\n", --t);
 }

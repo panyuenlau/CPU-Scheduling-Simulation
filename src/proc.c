@@ -5,7 +5,7 @@
 
 /*
     How-to: give the first 5 arguments to configure processes
-    Example: gcc proc.c -lm
+    Example: gcc -Wall -Werror -o a.out *.c -lm 
              ./a.out 10 0.01 400 10 256
 
 */

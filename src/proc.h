@@ -26,7 +26,7 @@ typedef struct
     int sample_t;       // actual burst time for the current running process
     int remain_sample_t;       // remaining time of a cpu burst
     int original_burst_t; // keep track of original burst time for processes that are preempted
-    bool preempt;     // when a cpu burst really completed, prev_cpub decrements
+    bool preempt;      // indicates if the cpu burst was preempted or not
 } Proc;
 
 float alpha; // defined as a global variable for ease
@@ -42,13 +42,12 @@ void gen_procs(Proc *procs, int seed, int procs_num, int ub, double lambda);
 
 int sort (const void * a, const void * b);
 
-void get_Q (Proc * ready[], int procs_num, char * queue);
+void get_Q (Proc * ready[], int procs_num, char * queue, bool preem_flag);
 
 int append_io_to_ready_queue (Proc * ready_procs[], Proc * procs, int procs_num, int * ctr_ready, int t);
 int append_new_to_ready_queue (Proc * ready_procs[], Proc * procs, int procs_num, int * ctr_ready, int t);
 
-void SJF_sort (Proc * ready[], int ctr_ready);
-void SRT_sort (Proc * ready[], int ctr_ready, int t, int procs_num);
+void sort_queue (Proc * ready[], int ctr_ready, bool srt_sort);
 
 
 void burst_begin (Proc * proc, int t);
@@ -77,7 +76,7 @@ void check_cpub_context(Proc **ready, int cs_t, int procs_num, int t, int *ctr_r
 
 
 bool check_preem (Proc *procs, Proc **ready, char q[], int procs_num, int t, int cs_t, int ctr_ready);
-bool check_preem_from_io (Proc *procs, int procs_num, char q[], Proc **ready, int completed_i, int t, int ctr_ready, int cs_t);
+bool check_preem_from_io (Proc *procs, int procs_num, Proc **ready, int completed_i, int t, int ctr_ready, int cs_t);
 
 
 void print_cpub(Proc *procs, int procs_num, int ctr_ready);

@@ -46,16 +46,20 @@ void SRT(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_read
                 if (id_l[i] == ready[j]->id)
                 {
                     printf("time %dms: Process %c (tau %dms) completed I/O; ", t, ready[j]->id, ready[j]->tau);
-                    char q[60];
-                    get_Q(ready, procs_num, q);
                     
                     /*check for preemption when a process completed its I/O burst*/
-                    bool prem = check_preem_from_io(procs, procs_num, q, ready, j, t, ctr_ready, cs_t);
-
-                    SJF_sort(ready, ctr_ready);
-
-                    if (!prem)
+                    bool prem = check_preem_from_io(procs, procs_num, ready, j, t, ctr_ready, cs_t);
+                    
+                    sort_queue(ready, ctr_ready, true);
+                    char q[60];
+                    if (prem)
+                        get_Q(ready, procs_num, q, true);
+                    else
+                    {
+                        get_Q(ready, procs_num, q, false);
                         printf("added to ready queue [Q %s]\n", q);
+                        // print_cpub(procs, procs_num, 2);
+                    }
                     break;
                 }
             }
@@ -76,10 +80,10 @@ void SRT(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_read
                 {
                     printf("time %dms: Process %c (tau %dms) arrived; ", t, ready[j]->id, ready[j]->tau);
 
-                    SJF_sort(ready, ctr_ready);
+                    sort_queue(ready, ctr_ready, true);
 
                     char q[60];
-                    get_Q(ready, procs_num, q);
+                    get_Q(ready, procs_num, q, false);
                     printf("added to ready queue [Q %s]\n", q);
                     break;
                 }
