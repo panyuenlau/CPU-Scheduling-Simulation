@@ -45,7 +45,7 @@ void FCFS(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_rea
         // Step 2: Check if CPU burst/context switch completes
         if (ready[0] != NULL)
         {
-            int last_tau = check_burst(ready[0], cs_t, t);
+            int last_tau = update_est_burst(ready[0], cs_t, t);
             if (last_tau)
             {
                 char q[60];

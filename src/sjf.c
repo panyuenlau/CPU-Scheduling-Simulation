@@ -61,7 +61,7 @@ void SJF(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_read
             break;
 
         // Step 1.5: Check the ready queue (and begin to burst) before appending new ready procs
-        check_rdy_que(ready, cs_t, procs_num, t);
+        check_rdy_que(procs,ready, cs_t, procs_num, t, false, ctr_ready);
 
         // Step 2: Check if CPU burst/context switch completes
         check_cpub_context(ready, cs_t, procs_num, t, &ctr_ready);
@@ -114,7 +114,7 @@ void SJF(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_read
         }
         
         // Step 4: Begin to burst/context switch on to CPU
-        burst_context(ready, cs_t, procs_num, t);
+        check_rdy_que(procs, ready, cs_t, procs_num, t, false, ctr_ready);
         t++;
     }
     printf("time %dms: Simulator ended for SJF [Q <empty>]\n\n", --t);

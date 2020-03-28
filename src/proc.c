@@ -1,7 +1,6 @@
 // #include <stdlib.h>
 // #include <math.h>
 #include <unistd.h>
-#include <stdbool.h>
 #include "proc.h"
 
 /*
@@ -60,18 +59,14 @@ int main (int argc, char * argv[])
         for (int i = 0; i < procs_num; i++)
             ready[i] = NULL;
         int ctr_ready = 0;  // number of procs in ready[] array
-#if 1
+#if 0
         if(strcmp(scheduling_algos[k], "FCFS") == 0)
-        {
             FCFS(procs, ready, procs_num, t, cs_t, ctr_ready);
-        }
 #endif
 
-#if 1
+#if 0
         if (strcmp(scheduling_algos[k], "SJF") == 0)
-        {
             SJF(procs, ready, procs_num, t, cs_t, ctr_ready);
-        }
 #endif
 
 #if 1
