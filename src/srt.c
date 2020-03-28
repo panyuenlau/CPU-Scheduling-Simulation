@@ -90,5 +90,5 @@ void SRT(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_read
 
         t++;
     }
-    printf("time %dms: Simulator ended for SRT [Q <empty>]\n\n", --t);
+    printf("time %dms: Simulator ended for SRT [Q <empty>]\n", --t);
 }

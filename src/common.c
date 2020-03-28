@@ -281,7 +281,7 @@ int update_est_burst (Proc * proc, int cs_t, int t)
 
 bool check_preem (Proc *procs, Proc **ready, char q[], int procs_num, int t, int cs_t, int ctr_ready)
 {
-    if (ready[1] != NULL)
+    if (ready[0] != NULL && ready[1] != NULL)
     {
         if (ready[0]->remain_tau > ready[1]->remain_tau)
         {
@@ -378,11 +378,12 @@ void check_rdy_que(Proc *procs,Proc **ready, int cs_t, int procs_num, int t,  bo
                     printf("time %dms: Process %c (tau %dms) started using the CPU with %dms burst remaining [Q <empty>]\n", 
                     t, ready[0]->id, ready[0]->tau, ready[0]->remain_sample_t);
                 else
+                {
                     printf("time %dms: Process %c (tau %dms) started using the CPU with %dms burst remaining [Q %s]\n", 
                     t, ready[0]->id, ready[0]->tau, ready[0]->remain_sample_t, q);
-                
-                /*Check preemption when the process starts to burst*/
-                check_preem(procs, ready, q, procs_num, t, cs_t, ctr_ready);
+                    /*Check preemption when the process starts to burst*/
+                    check_preem(procs, ready, q, procs_num, t, cs_t, ctr_ready);
+                }
             }
             else
             {
