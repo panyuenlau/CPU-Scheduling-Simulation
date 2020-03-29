@@ -1,42 +1,5 @@
 #include "proc.h"
 
-void SJF_sort (Proc * ready[], int ctr_ready)
-{
-    if (ready[0] == NULL || ready[1] == NULL)
-        return;
-    else if (ready[0]->stat != 2 && ready[2] == NULL)
-        return;
-    int k = 1;
-    int m = 0;
-    if (ready[0]->stat != 2)
-    {
-        m = 1;
-        k = 2;
-    }
-    Proc * p;
-    // Bubble sort
-    for (int i = 0; i < ctr_ready - k; i++)
-    {
-        for (int j = m; j < ctr_ready-i-1; j++)
-        {
-            if (ready[j]->tau > ready[j+1]->tau)
-            {
-                // swap
-                p = ready[j];
-                ready[j] = ready[j+1];
-                ready[j+1] = p;
-            }
-            else if (ready[j]->tau == ready[j+1]->tau && ready[j]->id > ready[j+1]->id)
-            {
-                // swap
-                p = ready[j];
-                ready[j] = ready[j+1];
-                ready[j+1] = p;
-            }
-        }
-    }
-}
-
 void SJF(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_ready)
 {
     for (int procs_ctr = 0; procs_ctr < procs_num; procs_ctr++)
@@ -61,7 +24,8 @@ void SJF(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_read
             break;
 
         // Step 1.5: Check the ready queue (and begin to burst) before appending new ready procs
-        check_rdy_que(ready, cs_t, procs_num, t);
+        // check_rdy_que(procs,ready, cs_t, procs_num, t, false, ctr_ready, false);
+        check_rdy_que(procs, ready, cs_t, procs_num, t, true, ctr_ready);
 
         // Step 2: Check if CPU burst/context switch completes
         check_cpub_context(ready, cs_t, procs_num, t, &ctr_ready);
@@ -82,7 +46,7 @@ void SJF(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_read
                 if (id_l[i] == ready[j]->id)
                 {
                     printf("time %dms: Process %c (tau %dms) completed I/O; ", t, ready[j]->id, ready[j]->tau);
-                    SJF_sort(ready, ctr_ready);
+                    sort_queue(ready, ctr_ready, false);
                     char q[60];
                     get_Q(ready, procs_num, q);
                     printf("added to ready queue [Q %s]\n", q);
@@ -104,7 +68,7 @@ void SJF(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_read
                 if (id_l[i] == ready[j]->id)
                 {
                     printf("time %dms: Process %c (tau %dms) arrived; ", t, ready[j]->id, ready[j]->tau);
-                    SJF_sort (ready, ctr_ready);
+                    sort_queue (ready, ctr_ready, false);
                     char q[60];
                     get_Q(ready, procs_num, q);
                     printf("added to ready queue [Q %s]\n", q);
@@ -114,8 +78,9 @@ void SJF(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_read
         }
         
         // Step 4: Begin to burst/context switch on to CPU
-        burst_context(ready, cs_t, procs_num, t);
+        // check_rdy_que(procs, ready, cs_t, procs_num, t, false, ctr_ready, false);
+        check_rdy_que(procs, ready, cs_t, procs_num, t, true, ctr_ready);
         t++;
     }
-    printf("time %dms: Simulator ended for SJF [Q <empty>]\n\n", --t);
+    printf("time %dms: Simulator ended for SJF [Q <empty>]\n", --t);
 }

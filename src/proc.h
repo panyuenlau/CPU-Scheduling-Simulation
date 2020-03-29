@@ -6,6 +6,8 @@
 #include <time.h>
 #include <math.h>
 #include <string.h>
+#include <stdbool.h>
+
 
 typedef struct
 {
@@ -14,14 +16,17 @@ typedef struct
                          5: context switch on to CPU, 6: context switch out of CPU} */
     int cpu_b;          // number of cpu bursts it has
     int arrival_t;      // arrival time
-    int cpu_t[100];     // length of each burst
-    int io_t[100];      // length of each io
+    int cpu_t[100];     // array CPU burst length
+    int io_t[100];      // array of IO burst length
     int cpu_b_static;   // reserved for final calculation
     int arrival_t_static; // reserved for final calculation
-    int burst_t;        // keep track of burst time
     int wait_t;         // keep track of wait time
     int tau;            // estimated burst time
-    int sample_t;
+    int remain_tau;     // remaining tau
+    int sample_t;       // actual burst time for the current running process
+    int remain_sample_t;       // remaining time of a cpu burst
+    int original_burst_t; // keep track of original burst time for processes that are preempted
+    bool preempt;      // indicates if the cpu burst was preempted or not
 } Proc;
 
 float alpha; // defined as a global variable for ease
@@ -40,15 +45,14 @@ int sort (const void * a, const void * b);
 void get_Q (Proc * ready[], int procs_num, char * queue);
 
 int append_io_to_ready_queue (Proc * ready_procs[], Proc * procs, int procs_num, int * ctr_ready, int t);
-
 int append_new_to_ready_queue (Proc * ready_procs[], Proc * procs, int procs_num, int * ctr_ready, int t);
 
-void SJF_sort (Proc * ready[], int ctr_ready);
-void SRT_sort (Proc * ready[], int ctr_ready);
-
+void sort_queue (Proc * ready[], int ctr_ready, bool srt_sort);
 
 void burst_begin (Proc * proc, int t);
-int check_burst (Proc * proc, int cs_t, int t);
+
+int update_est_burst (Proc * proc, int cs_t, int t);
+void update_remain_t (Proc * procs, int proc_num);
 
 void rm_running_proc (Proc * ready[], int procs_num, int * ctr_ready);
 
@@ -63,10 +67,17 @@ int check_all_procs(Proc *procs, int procs_num);
 
 
 /*Check the ready queue (and begin to burst) before appending new ready procs*/
-void check_rdy_que(Proc **ready, int cs_t, int procs_num, int t);
+void check_rdy_que(Proc *procs,Proc **ready, int cs_t, int procs_num, int t,  bool srt_flag, int ctr_ready);
 
 void check_cpub_context(Proc **ready, int cs_t, int procs_num, int t, int *ctr_ready);
 
-void burst_context(Proc **ready, int cs_t, int procs_num, int t);
+
+/*Check preemptions*/
+bool check_preem (Proc *procs, Proc **ready, char q[], int procs_num, int t, int cs_t, int ctr_ready);
+bool check_preem_from_io (Proc *procs, int procs_num, Proc **ready, int completed_i, int t, int ctr_ready, int cs_t);
+
+
+/*helper function for debugging*/
+void print_cpub(Proc *procs, int procs_num, int ctr_ready);
 
 #endif
