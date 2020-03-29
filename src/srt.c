@@ -17,6 +17,7 @@ void SRT(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_read
     printf("time %dms: Simulator started for SRT [Q <empty>]\n", t);
     while(1)
     {
+        bool prem = false;
         // Step 1: Check if all processes complete
         if (check_all_procs(procs, procs_num) == 1)
             break;
@@ -25,6 +26,7 @@ void SRT(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_read
         update_remain_t(procs, procs_num);
         
         // Step 1.5: Check the ready queue (and begin to burst) before appending new ready procs
+        // check_rdy_que(procs, ready, cs_t, procs_num, t, true, ctr_ready, prem);
         check_rdy_que(procs, ready, cs_t, procs_num, t, true, ctr_ready);
 
         // Step 2: Check if CPU burst/context switch completes; update estimated burst time
@@ -34,6 +36,12 @@ void SRT(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_read
         int start = append_io_to_ready_queue(ready, procs, procs_num, &ctr_ready, t);
         char id_l[26];
         int temp = 0;
+        
+        /*
+        TODO: change the way of printing on this part, 
+        example: output04 -- 24086ms, process I and N both finish I/O at the same time, 
+        but N shouldn't be in the ready queue before it actually comes back to the ready queue
+        */
         while(start + temp < ctr_ready)
         {
             id_l[temp] = ready[start + temp]->id;
@@ -48,23 +56,20 @@ void SRT(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_read
                     printf("time %dms: Process %c (tau %dms) completed I/O; ", t, ready[j]->id, ready[j]->tau);
                     
                     /*check for preemption when a process completed its I/O burst*/
-                    bool prem = check_preem_from_io(procs, procs_num, ready, j, t, ctr_ready, cs_t);
+                    prem = check_preem_from_io(procs, procs_num, ready, j, t, ctr_ready, cs_t);
                     
-                    sort_queue(ready, ctr_ready, true);
-                    char q[60];
-                    if (prem)
-                        get_Q(ready, procs_num, q, true);
-                    else
+                    if (!prem)
                     {
-                        get_Q(ready, procs_num, q, false);
+                        sort_queue(ready, ctr_ready, true);
+                        char q[60];
+                        get_Q(ready, procs_num, q);
                         printf("added to ready queue [Q %s]\n", q);
-                        // print_cpub(procs, procs_num, 2);
                     }
                     break;
                 }
             }
         }
-    
+        prem = false;
         start = append_new_to_ready_queue(ready, procs, procs_num, &ctr_ready, t);
         temp = 0;
         while(start + temp < ctr_ready)
@@ -80,11 +85,15 @@ void SRT(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_read
                 {
                     printf("time %dms: Process %c (tau %dms) arrived; ", t, ready[j]->id, ready[j]->tau);
 
-                    sort_queue(ready, ctr_ready, true);
-
-                    char q[60];
-                    get_Q(ready, procs_num, q, false);
-                    printf("added to ready queue [Q %s]\n", q);
+                    prem = check_preem_from_io(procs, procs_num, ready, j, t, ctr_ready, cs_t);
+                    
+                    if (!prem)
+                    {
+                        sort_queue(ready, ctr_ready, true);
+                        char q[60];
+                        get_Q(ready, procs_num, q);
+                        printf("added to ready queue [Q %s]\n", q);
+                    }
                     break;
                 }
             }

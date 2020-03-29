@@ -42,13 +42,12 @@ void gen_procs(Proc *procs, int seed, int procs_num, int ub, double lambda);
 
 int sort (const void * a, const void * b);
 
-void get_Q (Proc * ready[], int procs_num, char * queue, bool preem_flag);
+void get_Q (Proc * ready[], int procs_num, char * queue);
 
 int append_io_to_ready_queue (Proc * ready_procs[], Proc * procs, int procs_num, int * ctr_ready, int t);
 int append_new_to_ready_queue (Proc * ready_procs[], Proc * procs, int procs_num, int * ctr_ready, int t);
 
 void sort_queue (Proc * ready[], int ctr_ready, bool srt_sort);
-
 
 void burst_begin (Proc * proc, int t);
 
@@ -68,19 +67,17 @@ int check_all_procs(Proc *procs, int procs_num);
 
 
 /*Check the ready queue (and begin to burst) before appending new ready procs*/
-void check_rdy_que(Proc *procs, Proc **ready, int cs_t, int procs_num, int t, bool srt_flag, int ctr_ready);
+void check_rdy_que(Proc *procs,Proc **ready, int cs_t, int procs_num, int t,  bool srt_flag, int ctr_ready);
 
 void check_cpub_context(Proc **ready, int cs_t, int procs_num, int t, int *ctr_ready);
 
-// void burst_context(Proc **ready, int cs_t, int procs_num, int t, bool srt_flag);
 
-
+/*Check preemptions*/
 bool check_preem (Proc *procs, Proc **ready, char q[], int procs_num, int t, int cs_t, int ctr_ready);
 bool check_preem_from_io (Proc *procs, int procs_num, Proc **ready, int completed_i, int t, int ctr_ready, int cs_t);
 
 
+/*helper function for debugging*/
 void print_cpub(Proc *procs, int procs_num, int ctr_ready);
-
-
 
 #endif

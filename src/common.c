@@ -67,28 +67,18 @@ int sort (const void * a, const void * b)
         return (p1->id > p2->id) - (p1->id < p2->id);
 }
 
-void get_Q (Proc * ready[], int procs_num, char * queue, bool preem_flag)
+void get_Q (Proc * ready[], int procs_num, char * queue)
 {
     int ctr = 0;
     for (int i = 0; i < procs_num; i++)
     {
         if (ready[i] == NULL)
             break;
-        if (preem_flag)
+
+        if (ready[i]->stat == 2)
         {
-            if (ready[i]->stat == 2 || ready[i]->stat == 7)
-            {
-                queue[ctr++] = ready[i]->id;
-                queue[ctr++] = ' ';
-            }            
-        }
-        else
-        {
-            if (ready[i]->stat == 2)
-            {
-                queue[ctr++] = ready[i]->id;
-                queue[ctr++] = ' ';
-            }
+            queue[ctr++] = ready[i]->id;
+            queue[ctr++] = ' ';
         }
     }
     if (ctr == 0)
@@ -146,7 +136,7 @@ void sort_queue (Proc * ready[], int ctr_ready, bool srt_sort)
     }
 }
 
-/*Append a process that finishes IO burst back to the read queue*/
+/*Append a process that finishes IO burst back to the ready queue*/
 int append_io_to_ready_queue (Proc * ready_procs[], Proc * procs, int procs_num, int * ctr_ready, int t)
 {
     Proc ready[26];
@@ -284,13 +274,15 @@ void update_remain_t (Proc * procs, int proc_num)
     }
 }
 
-void print_cpub(Proc *procs, int procs_num, int ctr_ready)
+void print_info(Proc *procs, int procs_num, int ctr_ready)
 {
     printf("\n=========================Printing information============================\n");
     for (int i = 0; i < procs_num; i++)
     {
-        printf("Process %c -- original_burst_t: %d, sample_t: %d, remain_sample_t: %d, stat: %d, arrival_t: %d, tau: %d, remain_tau: %d, preempt? %d;\n", 
-        procs[i].id, procs[i].original_burst_t, procs[i].sample_t, procs[i].remain_sample_t, procs[i].stat, procs[i].arrival_t, procs[i].tau, procs[i].remain_tau, procs[i].preempt);
+        // printf("Process %c -- original_burst_t: %d, sample_t: %d, remain_sample_t: %d, stat: %d, arrival_t: %d, tau: %d, remain_tau: %d, preempt? %d;\n", 
+        // procs[i].id, procs[i].original_burst_t, procs[i].sample_t, procs[i].remain_sample_t, procs[i].stat, procs[i].arrival_t, procs[i].tau, procs[i].remain_tau, procs[i].preempt);
+        printf("Process %c -- status: %d, arrival_t: %d, stat: %d, original_burst_t: %d, sample_t: %d, remain_sample_t: %d\n", 
+        procs[i].id, procs[i].stat, procs[i].arrival_t, procs[i].stat, procs[i].original_burst_t, procs[i].sample_t, procs[i].remain_sample_t);
         printf("cpu_t: ");
         for(int j = 0; j < procs[i].cpu_b; j++)
         {
@@ -346,30 +338,34 @@ bool check_preem (Proc *procs, Proc **ready, char q[], int procs_num, int t, int
         if (ready[0]->remain_tau > ready[1]->remain_tau)
         {
             printf("time %dms: Process %c (tau %dms) will preempt %c [Q %s]\n", t, ready[1]->id, ready[1]->tau, ready[0]->id, q);
-            // First, swap ready[0] and ready[1]
-            Proc *temp = ready[0];
-            ready[0] = ready[1];
-            ready[1] = temp;
 
-            // Then, update the arrival time and stat for the first process in the ready queue
-            ready[0]->arrival_t = t + cs_t;
-            ready[0]->stat = 5;
-
-            // add the remaining cpu burst back to the cpu_t list to the preempted process
-            for (int j = ready[1]->cpu_b + 1; j > 0; j--)
-            {
-                ready[1]->cpu_t[j] = ready[1]->cpu_t[j-1];
-            }
-            ready[1]->cpu_t[0] = ready[1]->remain_sample_t;
+            /*
+                ready[0]: process that needs to be preempted
+                ready[1]: process that will preempt ready[0]
+            */
 
             // keep track of the original burst in order to correctly calculate next tau
             if (!ready[1]->preempt)
             {
-                ready[1]->original_burst_t = ready[1]->sample_t;
+                ready[1]->original_burst_t = ready[1]->cpu_t[0];
                 ready[1]->preempt = true;
             }
-            ready[1]->stat = 2;
-            ready[1]->cpu_b += 1;
+            ready[1]->stat = 7;
+            ready[1]->arrival_t = t + cs_t / 2;
+
+            // add the remaining cpu burst back to the cpu_t list to the preempted process
+            for (int j = ready[0]->cpu_b + 1; j > 0; j--)
+            {
+                ready[0]->cpu_t[j] = ready[0]->cpu_t[j-1];
+            }
+            ready[0]->cpu_t[0] = ready[0]->remain_sample_t;
+            ready[0]->stat = 2;
+            ready[0]->cpu_b += 1;
+
+            // now swap them
+            Proc *temp = ready[0];
+            ready[0] = ready[1];
+            ready[1] = temp;
         }
     }
     return true;
@@ -383,18 +379,16 @@ bool check_preem_from_io (Proc *procs, int procs_num, Proc **ready, int complete
         {
             if (procs[i].remain_tau > ready[completed_i]->remain_tau)
             {
-                // procs[i]: process that is being preempted
-                // ready[completed_i]: process that is preempting procs[i]
+                /*
+                    procs[i]: process that is being preempted
+                    ready[completed_i]: process that is preempting procs[i]
+                */
+                ready[completed_i]->stat = 2; // ready state
+                ready[completed_i]->arrival_t = t + cs_t; // add 
                 
-                // ready[completed_i]->stat = 5;
-                // ready[completed_i]->arrival_t = t + cs_t; // context switch time included here
-
-                ready[completed_i]->stat = 7; // ready state
-                ready[completed_i]->arrival_t = t + cs_t / 2; // add 
-
                 sort_queue (ready, ctr_ready, true);
                 char q2[60];
-                get_Q(ready, procs_num, q2, true);
+                get_Q(ready, procs_num, q2);
                 printf("preempting %c [Q %s]\n", procs[i].id, q2);
 
                 /*Add the remaining burst time of the current burst back to the cpu_t*/
@@ -404,9 +398,9 @@ bool check_preem_from_io (Proc *procs, int procs_num, Proc **ready, int complete
                 }
                 procs[i].cpu_t[0] = procs[i].remain_sample_t;
                 procs[i].cpu_b += 1;
-                // procs[i].stat = 2;
-                procs[i].stat = 2;
-                // procs[i].arrival_t = t + cs_t;
+                
+                procs[i].stat = 7;
+                procs[i].arrival_t = t + cs_t/2;
 
                 /* if this is the first preemption for this process, remember the original burst time
                 *  otherwise, leave the original burst time as it is.
@@ -425,6 +419,7 @@ bool check_preem_from_io (Proc *procs, int procs_num, Proc **ready, int complete
 }
 
 /*Check the ready queue (and begin to burst) before appending new ready procs*/
+// void check_rdy_que(Proc *procs,Proc **ready, int cs_t, int procs_num, int t,  bool srt_flag, int ctr_ready, bool prem)
 void check_rdy_que(Proc *procs,Proc **ready, int cs_t, int procs_num, int t,  bool srt_flag, int ctr_ready)
 {
     if (ready[0] != NULL)
@@ -433,19 +428,20 @@ void check_rdy_que(Proc *procs,Proc **ready, int cs_t, int procs_num, int t,  bo
         {
             cxt_s_in(ready, cs_t, t);
         }
-        
-        if (ready[0]->stat == 7)
-        {
-            ready[0]->arrival_t += cs_t / 2;
-            ready[0]->stat = 5;
-        }
 
+        if(ready[0]->stat == 7 && ready[0]->arrival_t == t)
+        {
+            ready[0]->stat = 2;
+            ready[0]->arrival_t = t + 2;
+            sort_queue (ready, ctr_ready, true);
+        }
+        
         if (ready[0]->stat == 5 && ready[0]->arrival_t == t)
         {
             burst_begin(ready[0], t);
 
             char q[60];
-            get_Q(ready, procs_num, q, false);
+            get_Q(ready, procs_num, q);
 
             if (srt_flag)
             {
@@ -482,7 +478,7 @@ void check_cpub_context(Proc **ready, int cs_t, int procs_num, int t, int *ctr_r
         if (last_tau)
         {
             char q[60];
-            get_Q(ready, procs_num, q, false);
+            get_Q(ready, procs_num, q);
             if (strlen(q) == 0)
             {
                 if (ready[0]->cpu_b == 1)
@@ -518,6 +514,7 @@ void check_cpub_context(Proc **ready, int cs_t, int procs_num, int t, int *ctr_r
                     printf("time %dms: Process %c terminated [Q %s]\n", t, ready[0]->id, q);
             }
         }
+
         int rc = check_proc_completion(ready, procs_num, t);
         if (rc == 1 || rc == 2)
         {   

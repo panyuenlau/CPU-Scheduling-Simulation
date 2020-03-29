@@ -24,7 +24,8 @@ void SJF(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_read
             break;
 
         // Step 1.5: Check the ready queue (and begin to burst) before appending new ready procs
-        check_rdy_que(procs,ready, cs_t, procs_num, t, false, ctr_ready);
+        // check_rdy_que(procs,ready, cs_t, procs_num, t, false, ctr_ready, false);
+        check_rdy_que(procs, ready, cs_t, procs_num, t, true, ctr_ready);
 
         // Step 2: Check if CPU burst/context switch completes
         check_cpub_context(ready, cs_t, procs_num, t, &ctr_ready);
@@ -47,7 +48,7 @@ void SJF(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_read
                     printf("time %dms: Process %c (tau %dms) completed I/O; ", t, ready[j]->id, ready[j]->tau);
                     sort_queue(ready, ctr_ready, false);
                     char q[60];
-                    get_Q(ready, procs_num, q, false);
+                    get_Q(ready, procs_num, q);
                     printf("added to ready queue [Q %s]\n", q);
                     break;
                 }
@@ -69,7 +70,7 @@ void SJF(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_read
                     printf("time %dms: Process %c (tau %dms) arrived; ", t, ready[j]->id, ready[j]->tau);
                     sort_queue (ready, ctr_ready, false);
                     char q[60];
-                    get_Q(ready, procs_num, q, false);
+                    get_Q(ready, procs_num, q);
                     printf("added to ready queue [Q %s]\n", q);
                     break;
                 }
@@ -77,7 +78,8 @@ void SJF(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_read
         }
         
         // Step 4: Begin to burst/context switch on to CPU
-        check_rdy_que(procs, ready, cs_t, procs_num, t, false, ctr_ready);
+        // check_rdy_que(procs, ready, cs_t, procs_num, t, false, ctr_ready, false);
+        check_rdy_que(procs, ready, cs_t, procs_num, t, true, ctr_ready);
         t++;
     }
     printf("time %dms: Simulator ended for SJF [Q <empty>]\n", --t);
