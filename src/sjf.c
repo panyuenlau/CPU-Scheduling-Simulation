@@ -32,51 +32,50 @@ void SJF(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_read
         
         // Step 3: Fill in the ready queue
         int start = append_io_to_ready_queue(ready, procs, procs_num, &ctr_ready, t);
-        char id_l[26];
+        Proc * temp_ready[26][26];
         int temp = 0;
         while(start + temp < ctr_ready)
         {
-            id_l[temp] = ready[start + temp]->id;
+            int i;
+            for (i = 0; i <= start + temp; i++)
+            {
+                temp_ready[temp][i] = ready[i];
+            }
+            temp_ready[temp][i] = NULL;
             temp ++;
         }
-        for (int i = 0; i < temp; i++)
+        for (int j = start; j < ctr_ready; j++)
         {
-            for (int j = 0; j < ctr_ready; j++)
-            {
-                if (id_l[i] == ready[j]->id)
-                {
-                    printf("time %dms: Process %c (tau %dms) completed I/O; ", t, ready[j]->id, ready[j]->tau);
-                    sort_queue(ready, ctr_ready, false);
-                    char q[60];
-                    get_Q(ready, procs_num, q);
-                    printf("added to ready queue [Q %s]\n", q);
-                    break;
-                }
-            }
-        }
+            printf("time %dms: Process %c (tau %dms) completed I/O; ", t, ready[j]->id, ready[j]->tau);
+            sort_queue(temp_ready[j - start], j + 1, false);
+            char q[60];
+            get_Q(temp_ready[j - start], procs_num, q);
+            printf("added to ready queue [Q %s]\n", q);
+        }  
+        sort_queue (ready, ctr_ready, false);
+
         start = append_new_to_ready_queue(ready, procs, procs_num, &ctr_ready, t);
         temp = 0;
         while(start + temp < ctr_ready)
         {
-            id_l[temp] = ready[start + temp]->id;
+            int i;
+            for ( i = 0; i <= start + temp; i++)
+            {
+                temp_ready[temp][i] = ready[i];
+            }
+            temp_ready[temp][i] = NULL;
             temp ++;
         }
-        for (int i = 0; i < temp; i++)
+        for (int j = start; j < ctr_ready; j++)
         {
-            for (int j = 0; j < ctr_ready; j++)
-            {
-                if (id_l[i] == ready[j]->id)
-                {
-                    printf("time %dms: Process %c (tau %dms) arrived; ", t, ready[j]->id, ready[j]->tau);
-                    sort_queue (ready, ctr_ready, false);
-                    char q[60];
-                    get_Q(ready, procs_num, q);
-                    printf("added to ready queue [Q %s]\n", q);
-                    break;
-                }
-            }
+            printf("time %dms: Process %c (tau %dms) arrived; ", t, ready[j]->id, ready[j]->tau);
+            sort_queue(temp_ready[j - start], j + 1, false);
+            char q[60];
+            get_Q(temp_ready[j - start], procs_num, q);
+            printf("added to ready queue [Q %s]\n", q);
         }
-        
+        sort_queue (ready, ctr_ready, false);
+
         // Step 4: Begin to burst/context switch on to CPU
         // check_rdy_que(procs, ready, cs_t, procs_num, t, false, ctr_ready, false);
         check_rdy_que(procs, ready, cs_t, procs_num, t, false, ctr_ready);
