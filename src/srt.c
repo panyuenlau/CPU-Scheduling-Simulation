@@ -34,70 +34,65 @@ void SRT(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_read
 
         // Step 3: Fill in the ready queue       
         int start = append_io_to_ready_queue(ready, procs, procs_num, &ctr_ready, t);
-        char id_l[26];
+
+        Proc * temp_ready[26][26];
         int temp = 0;
-        
-        /*
-        TODO: change the way of printing on this part, 
-        example: output04 -- 24086ms, process I and N both finish I/O at the same time, 
-        but N shouldn't be in the ready queue before it actually comes back to the ready queue
-        */
         while(start + temp < ctr_ready)
         {
-            id_l[temp] = ready[start + temp]->id;
+            int i;
+            for (i = 0; i <= start + temp; i++)
+            {
+                temp_ready[temp][i] = ready[i];
+            }
+            temp_ready[temp][i] = NULL;
             temp ++;
         }
-        for (int i = 0; i < temp; i++)
+
+        for (int j = start; j < ctr_ready; j++)
         {
-            for (int j = 0; j < ctr_ready; j++)
-            {
-                if (id_l[i] == ready[j]->id)
-                {
-                    printf("time %dms: Process %c (tau %dms) completed I/O; ", t, ready[j]->id, ready[j]->tau);
-                    
-                    /*check for preemption when a process completed its I/O burst*/
-                    prem = check_preem_from_io(procs, procs_num, ready, j, t, ctr_ready, cs_t);
-                    
-                    if (!prem)
-                    {
-                        sort_queue(ready, ctr_ready, true);
-                        char q[60];
-                        get_Q(ready, procs_num, q);
-                        printf("added to ready queue [Q %s]\n", q);
-                    }
-                    break;
-                }
-            }
+            printf("time %dms: Process %c (tau %dms) completed I/O; ", t, ready[j]->id, ready[j]->tau);
+            
+            prem = check_preem_from_io(procs, procs_num, ready, j, t, ctr_ready, cs_t);
+            sort_queue (temp_ready[j - start], j + 1, true);
+            char q[60];
+            get_Q(temp_ready[j-start], procs_num, q);
+            if(prem)
+                printf("preempting %c [Q %s]\n", ready[0]->id, q);
+            else
+                printf("added to ready queue [Q %s]\n", q);
         }
+        sort_queue(ready, ctr_ready, true);
+
         prem = false;
         start = append_new_to_ready_queue(ready, procs, procs_num, &ctr_ready, t);
         temp = 0;
+
         while(start + temp < ctr_ready)
         {
-            id_l[temp] = ready[start + temp]->id;
+            int i;
+            for ( i = 0; i <= start + temp; i++)
+            {
+                temp_ready[temp][i] = ready[i];
+            }
+            temp_ready[temp][i] = NULL;
             temp ++;
         }
-        for (int i = 0; i < temp; i++)
+        for (int j = start; j < ctr_ready; j++)
         {
-            for (int j = 0; j < ctr_ready; j++)
-            {
-                if (id_l[i] == ready[j]->id)
-                {
-                    printf("time %dms: Process %c (tau %dms) arrived; ", t, ready[j]->id, ready[j]->tau);
+            printf("time %dms: Process %c (tau %dms) arrived; ", t, ready[j]->id, ready[j]->tau);
+            
+            prem = check_preem_from_io(procs, procs_num, ready, j, t, ctr_ready, cs_t);
 
-                    prem = check_preem_from_io(procs, procs_num, ready, j, t, ctr_ready, cs_t);
-                    
-                    if (!prem)
-                    {
-                        sort_queue(ready, ctr_ready, true);
-                        char q[60];
-                        get_Q(ready, procs_num, q);
-                        printf("added to ready queue [Q %s]\n", q);
-                    }
-                    break;
-                }
-            }
+            sort_queue (temp_ready[j - start], j + 1, true);
+            char q[60];
+            get_Q(temp_ready[j-start], procs_num, q);            
+            if(prem)
+                printf("preempting %c [Q %s]\n", ready[0]->id, q);
+            else
+                printf("added to ready queue [Q %s]\n", q);
         }
+        sort_queue (ready, ctr_ready, true);
+        
         // Step 4: Begin to burst/context switch on to CPU
         check_rdy_que(procs, ready, cs_t, procs_num, t, true, ctr_ready);
 

@@ -51,6 +51,7 @@ void gen_procs(Proc *procs, int seed, int procs_num, int ub, double lambda)
         procs[i].remain_sample_t = 0;
         procs[i].original_burst_t = -1; // if the original_burst_t stays at -1, meaning no preemption occured to the running process
         procs[i].preempt = false;
+        procs[i]
     }
 }
 
@@ -339,19 +340,28 @@ bool check_preem (Proc *procs, Proc **ready, char q[], int procs_num, int t, int
         {
             printf("time %dms: Process %c (tau %dms) will preempt %c [Q %s]\n", t, ready[1]->id, ready[1]->tau, ready[0]->id, q);
 
-            /*
-                ready[0]: process that needs to be preempted
-                ready[1]: process that will preempt ready[0]
-            */
+            // ready[0]: process that needs to be preempted
+            // ready[1]: process that will preempt ready[0]
 
-            // keep track of the original burst in order to correctly calculate next tau
-            if (!ready[1]->preempt)
+            /* 
+            keep track of the original burst in order to correctly calculate next tau
+                -if this cpu burst was never preempted before, the original burst is the sample burst
+                -if this cpu burst was preempted before, original burst remains the same
+            */
+            if (!ready[0]->preempt)
             {
-                ready[1]->original_burst_t = ready[1]->cpu_t[0];
-                ready[1]->preempt = true;
+                ready[0]->original_burst_t = ready[0]->sample_t;
+                ready[0]->preempt = true;
             }
-            ready[1]->stat = 7;
-            ready[1]->arrival_t = t + cs_t / 2;
+
+            // change stat of the process that will be preempted to 7
+            // In cs_t/2: 
+            //  1. change stat to 2
+            //  2. context switch in for ready[1]
+            //  3. swap ready[0] and ready[1]
+
+            ready[0]->stat = 7; 
+            ready[0]->arrival_t = t + cs_t / 2;
 
             // add the remaining cpu burst back to the cpu_t list to the preempted process
             for (int j = ready[0]->cpu_b + 1; j > 0; j--)
@@ -359,13 +369,7 @@ bool check_preem (Proc *procs, Proc **ready, char q[], int procs_num, int t, int
                 ready[0]->cpu_t[j] = ready[0]->cpu_t[j-1];
             }
             ready[0]->cpu_t[0] = ready[0]->remain_sample_t;
-            ready[0]->stat = 2;
             ready[0]->cpu_b += 1;
-
-            // now swap them
-            Proc *temp = ready[0];
-            ready[0] = ready[1];
-            ready[1] = temp;
         }
     }
     return true;
@@ -383,13 +387,10 @@ bool check_preem_from_io (Proc *procs, int procs_num, Proc **ready, int complete
                     procs[i]: process that is being preempted
                     ready[completed_i]: process that is preempting procs[i]
                 */
-                ready[completed_i]->stat = 2; // ready state
-                ready[completed_i]->arrival_t = t + cs_t; // add 
-                
-                sort_queue (ready, ctr_ready, true);
-                char q2[60];
-                get_Q(ready, procs_num, q2);
-                printf("preempting %c [Q %s]\n", procs[i].id, q2);
+
+                // context switch ready[completed_i] in cs_t/2
+                ready[completed_i]->stat = 2;
+                ready[completed_i]->arrival_t = t + cs_t / 2;
 
                 /*Add the remaining burst time of the current burst back to the cpu_t*/
                 for (int j = procs[i].cpu_b + 1; j > 0; j--)
@@ -399,12 +400,11 @@ bool check_preem_from_io (Proc *procs, int procs_num, Proc **ready, int complete
                 procs[i].cpu_t[0] = procs[i].remain_sample_t;
                 procs[i].cpu_b += 1;
                 
-                procs[i].stat = 7;
+                // context switch out, but need to be put back to ready queue in cs_t/2
+                procs[i].stat = 8;
                 procs[i].arrival_t = t + cs_t/2;
 
-                /* if this is the first preemption for this process, remember the original burst time
-                *  otherwise, leave the original burst time as it is.
-                */
+
                 if (!procs[i].preempt)
                 {
                     procs[i].original_burst_t = procs[i].sample_t;
@@ -432,8 +432,20 @@ void check_rdy_que(Proc *procs,Proc **ready, int cs_t, int procs_num, int t,  bo
         if(ready[0]->stat == 7 && ready[0]->arrival_t == t)
         {
             ready[0]->stat = 2;
-            ready[0]->arrival_t = t + 2;
+
+            ready[1]->stat = 5;
+            ready[1]->arrival_t = t + 2;
+            
+            Proc *temp = ready[0];
+            ready[0] = ready[1];
+            ready[1] = temp;
+
             sort_queue (ready, ctr_ready, true);
+        }
+
+        if (ready[0]->stat == 8 && ready[0]->arrival_t == t)
+        {
+            ready[0]->stat = 2;
         }
         
         if (ready[0]->stat == 5 && ready[0]->arrival_t == t)
@@ -474,6 +486,7 @@ void check_cpub_context(Proc **ready, int cs_t, int procs_num, int t, int *ctr_r
 {
     if (ready[0] != NULL)
     {
+        // printf("process %c: original burst time is: %d, sample_t: %d\n", ready[0]->id, ready[0]->original_burst_t, ready[0]->sample_t);
         int last_tau = update_est_burst(ready[0], cs_t, t);
         if (last_tau)
         {

@@ -13,7 +13,9 @@ typedef struct
 {
     char id;            // name of the proc
     int stat;           /* status {0: new, 1: completed, 2: ready, 3: blocking, 4: running, 
-                         5: context switch on to CPU, 6: context switch out of CPU} */
+                         5: context switch on to CPU, 6: context switch out of CPU, 
+                         7: a process will be preempted, need to be swapped in cs_t/2, 
+                         8: a process is being preempted, need to be put back to ready queue in cs_t/2} */
     int cpu_b;          // number of cpu bursts it has
     int arrival_t;      // arrival time
     int cpu_t[100];     // array CPU burst length
@@ -26,7 +28,7 @@ typedef struct
     int sample_t;       // actual burst time for the current running process
     int remain_sample_t;       // remaining time of a cpu burst
     int original_burst_t; // keep track of original burst time for processes that are preempted
-    bool preempt;      // indicates if the cpu burst was preempted or not
+    bool preempt;      // indicates if the current cpu burst was preempted or not
 } Proc;
 
 float alpha; // defined as a global variable for ease
@@ -78,6 +80,6 @@ bool check_preem_from_io (Proc *procs, int procs_num, Proc **ready, int complete
 
 
 /*helper function for debugging*/
-void print_cpub(Proc *procs, int procs_num, int ctr_ready);
+void print_info(Proc *procs, int procs_num, int ctr_ready);
 
 #endif
