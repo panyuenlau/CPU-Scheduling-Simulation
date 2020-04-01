@@ -42,6 +42,11 @@ int main (int argc, char * argv[])
     int procs_num = strtol(argv[4], NULL, 10); // argv[4]
     int cs_t = strtol(argv[5], NULL, 10);      // argv[5]
     alpha = strtof(argv[6], NULL);       // argv[6]
+    int slice = strtol(argv[7], NULL, 10); // argv[7]
+    char rr_add[10];
+    strcpy(rr_add, "END");
+    if (argc > 8)
+        strcpy(rr_add, argv[8]);
 
 
     char *scheduling_algos[4] = {"FCFS", "SJF", "SRT", "RR"};
@@ -67,9 +72,13 @@ int main (int argc, char * argv[])
             SJF(procs, ready, procs_num, t, cs_t, ctr_ready);
 #endif
 
-#if 1
+#if 0
         if (strcmp(scheduling_algos[k], "SRT") == 0)
             SRT(procs, ready, procs_num, t, cs_t, ctr_ready);
+#endif
+#if 1
+        if (strcmp(scheduling_algos[k], "RR") == 0)
+            RR(procs, ready, procs_num, t, cs_t, ctr_ready, slice, rr_add);
 #endif
     }
 

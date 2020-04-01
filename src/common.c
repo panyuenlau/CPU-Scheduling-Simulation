@@ -137,7 +137,7 @@ void sort_queue (Proc * ready[], int ctr_ready, bool srt_sort)
 }
 
 /*Append a process that finishes IO burst back to the ready queue*/
-int append_io_to_ready_queue (Proc * ready_procs[], Proc * procs, int procs_num, int * ctr_ready, int t)
+int append_io_to_ready_queue (Proc * ready_procs[], Proc * procs, int procs_num, int * ctr_ready, int t, bool add)
 {
     Proc ready[26];
     int ctr = 0;
@@ -154,17 +154,59 @@ int append_io_to_ready_queue (Proc * ready_procs[], Proc * procs, int procs_num,
     {
         qsort(ready, ctr, sizeof(Proc), sort);
     }
-    for (int i = 0; i < ctr; i++)
+    if (add)
     {
-        ready_procs[*ctr_ready] = &procs[(int)ready[i].id - 65];
-        ready_procs[*ctr_ready]->stat = 2;
-        *ctr_ready += 1;
+        for (int i = 0; i < ctr; i++)
+        {
+            ready_procs[*ctr_ready] = &procs[(int)ready[i].id - 65];
+            ready_procs[*ctr_ready]->stat = 2;
+            *ctr_ready += 1;
+        }
+        return idx;
     }
-    return idx;
+    else if (ctr > 0)
+    {
+        int i = 0;
+        // if (ready_procs[0] != NULL && ready_procs[0]->stat == 2)
+        //     i = 0;
+        // else if (ready_procs[0] == NULL)
+        //     i = 0;
+        
+        if (*ctr_ready != 0)
+        {
+            if (ready_procs[0]->stat != 2)
+                i = 1;
+            for (int j = (*ctr_ready - 1); j >= i; j--)
+            {
+                ready_procs[j + ctr] = ready_procs[j];
+            }
+        }
+        int c = 0;
+        for (int j = i; j < i + ctr; j++)
+        {
+            ready_procs[j] = &procs[(int)ready[c++].id - 65];
+            ready_procs[j]->stat = 2;
+            Proc* temp_ready[26];
+            int k = 0;
+            for (; k <= j; k++)
+                temp_ready[k] = ready_procs[k];
+            for (int m = ctr + i; m < *ctr_ready + ctr; m++)
+            {
+                temp_ready[k] = ready_procs[m];
+                k++;
+            }
+            char q[60];
+            get_Q(temp_ready, procs_num, q);
+            printf("time %dms: Process %c completed I/O; added to ready queue [Q %s]\n", t, ready_procs[j]->id, q);
+        }
+        *ctr_ready += ctr;
+        // print_info(ready_procs[0], procs_num, *ctr_ready);
+    }
+    return 0;
 }
 
-/*Append a new process to the ready qyeye, while applying the sorting rules*/
-int append_new_to_ready_queue (Proc * ready_procs[], Proc * procs, int procs_num, int * ctr_ready, int t)
+/*Append a new process to the ready queue, while applying the sorting rules*/
+int append_new_to_ready_queue (Proc * ready_procs[], Proc * procs, int procs_num, int * ctr_ready, int t, bool add)
 {
     Proc ready[26];
     int ctr = 0;
@@ -179,13 +221,55 @@ int append_new_to_ready_queue (Proc * ready_procs[], Proc * procs, int procs_num
     }
     if (ctr > 1)
         qsort(ready, ctr, sizeof(Proc), sort);
-    for (int i = 0; i < ctr; i++)
+    if (add)
     {
-        ready_procs[*ctr_ready] = &procs[(int)ready[i].id - 65];
-        ready_procs[*ctr_ready]->stat = 2;
-        *ctr_ready += 1;
+        for (int i = 0; i < ctr; i++)
+        {
+            ready_procs[*ctr_ready] = &procs[(int)ready[i].id - 65];
+            ready_procs[*ctr_ready]->stat = 2;
+            *ctr_ready += 1;
+        }
+        return idx;
     }
-    return idx;
+    else if (ctr > 0)
+    {
+        int i = 0;
+        // if (ready_procs[0] != NULL && ready_procs[0]->stat == 2)
+        //     i = 0;
+        // else if (ready_procs[0] == NULL)
+        //     i = 0;
+        // printf("add and ctr_ready = %d\n", *ctr_ready);
+        if (*ctr_ready != 0)
+        {
+            if (ready_procs[0]->stat != 2)
+                i = 1;
+            for (int j = (*ctr_ready - 1); j >= i; j--)
+            {
+                ready_procs[j + ctr] = ready_procs[j];
+            }
+        }
+        int c = 0;
+        for (int j = i; j < i + ctr; j++)
+        {
+            ready_procs[j] = &procs[(int)ready[c++].id - 65];
+            ready_procs[j]->stat = 2;
+            Proc* temp_ready[26];
+            int k = 0;
+            for (; k <= j; k++)
+                temp_ready[k] = ready_procs[k];
+            for (int m = ctr + i; m < *ctr_ready + ctr; m++)
+            {
+                temp_ready[k] = ready_procs[m];
+                k++;
+            }
+            char q[60];
+            get_Q(temp_ready, procs_num, q);
+            printf("time %dms: Process %c arrived; added to ready queue [Q %s]\n", t, ready_procs[j]->id, q);
+        }
+        *ctr_ready += ctr;
+        // print_info(ready_procs[0], procs_num, *ctr_ready);
+    }
+    return 0;
 }
 
 /*Remove a running process from the ready queue*/
@@ -226,6 +310,38 @@ int check_proc_completion (Proc * ready[], int procs_num, int t)
     return rc;
 }
 
+int RR_check_proc_completion (Proc * ready[], int procs_num, int t, int ctr_ready)
+{
+    int rc = 0;
+    if (ready[0]->stat == 6 && ready[0]->arrival_t == t)
+    {
+        if (ready[0]->cpu_b == 0 && ready[0]->remain_sample_t == 0)
+        {
+            ready[0]->stat = 1;
+            rc = 1;
+        }
+        else
+        {
+            if (ready[0]->remain_sample_t == 0)
+            {
+                ready[0]->stat = 3;
+                ready[0]->arrival_t = t + ready[0]->io_t[0];
+                for (int i = 0; i < ready[0]->cpu_b; i++)
+                {
+                    ready[0]->io_t[i] = ready[0]->io_t[i+1];
+                }
+                rc = 2;
+            }
+            else
+            {
+                ready[0]->stat = 2;
+                rc = 3;
+            }
+        }
+    }
+    return rc;
+}
+
 
 int check_all_procs(Proc *procs, int procs_num)
 {
@@ -258,6 +374,50 @@ void burst_begin (Proc *proc, int t)
     for (int i = 0; i < proc->cpu_b; i++)
     {
         proc->cpu_t[i] = proc->cpu_t[i+1];
+    }
+}
+
+bool RR_burst_begin (Proc *proc, int t, int slice)
+{
+    if ((proc->stat != 5 && proc->stat != 4) || (proc->cpu_b == 0 && proc->remain_sample_t == 0))
+    {
+        perror("ERROR: <Invalid Ready Queue.>");
+    }
+    proc->stat = 4;
+    if (proc->remain_sample_t == 0)
+    {
+        proc->sample_t = proc->cpu_t[0]; // sample_t: current running cpu burst time
+        proc->cpu_b -= 1;
+        proc->remain_sample_t = proc->sample_t;
+        if (proc->cpu_t[0] < slice)
+        {
+            proc->arrival_t = t + proc->cpu_t[0];
+            proc->remain_sample_t = 0;
+        }
+        else
+        {
+            proc->arrival_t = t + slice;
+            proc->remain_sample_t -= slice;
+        }
+        for (int i = 0; i < proc->cpu_b; i++)
+        {
+            proc->cpu_t[i] = proc->cpu_t[i+1];
+        }
+        return false;
+    }
+    else
+    {
+        if (proc->remain_sample_t < slice)
+        {
+            proc->arrival_t = t + proc->remain_sample_t;
+            proc->remain_sample_t = 0;
+        }
+        else
+        {
+            proc->arrival_t = t + slice;
+            proc->remain_sample_t -= slice;
+        }
+        return true;
     }
 }
 
@@ -327,6 +487,43 @@ int update_est_burst (Proc * proc, int cs_t, int t)
         proc->preempt = false;
         proc->original_burst_t = -1;
         return last_tau;
+    }
+    return 0;
+}
+
+int RR_check_burst (Proc * ready[], int cs_t, int t, int slice, int procs_num, int ctr_ready)
+{
+    if (ready[0]->stat == 4 && ready[0]->arrival_t == t)
+    {   
+        if (ready[1] != NULL)
+        {
+            if (ready[0]->remain_sample_t != 0)
+            {
+                char q[60];
+                get_Q(ready, procs_num, q);
+                printf("time %dms: Time slice expired; process %c preempted with %dms to go [Q %s]\n", 
+                t, ready[0]->id, ready[0]->remain_sample_t, q);
+                cxt_s_out(ready[0], cs_t, t);
+                return 0;
+            }
+            // print_info(ready[0], procs_num, ctr_ready);
+            cxt_s_out(ready[0], cs_t, t);
+            return 1;
+        }
+        else
+        {
+            if (ready[0]->remain_sample_t == 0)
+            {
+                cxt_s_out(ready[0], cs_t, t);
+                return 1;
+            }
+            else
+            {
+                RR_burst_begin(ready[0], t, slice);
+                printf("time %dms: Time slice expired; no preemption because ready queue is empty [Q <empty>]\n", t);
+                return 0;   
+            }
+        }
     }
     return 0;
 }
@@ -475,6 +672,43 @@ void check_rdy_que(Proc *procs,Proc **ready, int cs_t, int procs_num, int t,  bo
                 else
                     printf("time %dms: Process %c (tau %dms) started using the CPU for %dms burst [Q %s]\n",
                     t, ready[0]->id, ready[0]->tau, ready[0]->arrival_t - t, q);
+            }
+        }
+    }
+}
+
+void RR_check_rdy_que(Proc *procs,Proc **ready, int cs_t, int procs_num, int t, int ctr_ready, int slice)
+{
+    if (ready[0] != NULL)
+    {
+        if (ready[0]->stat == 2)
+        {
+            cxt_s_in(ready, cs_t, t);
+        }
+        
+        if (ready[0]->stat == 5 && ready[0]->arrival_t == t)
+        {
+            if (RR_burst_begin(ready[0], t, slice))
+            {
+                char q[60];
+                get_Q(ready, procs_num, q);
+                if (strlen(q) == 0)
+                    printf("time %dms: Process %c started using the CPU with %dms burst remaining [Q <empty>]\n", 
+                    t, ready[0]->id, ready[0]->remain_sample_t + ready[0]->arrival_t - t);
+                else
+                    printf("time %dms: Process %c started using the CPU with %dms burst remaining [Q %s]\n",
+                    t, ready[0]->id, ready[0]->remain_sample_t + ready[0]->arrival_t - t, q);
+            }
+            else
+            {
+                char q[60];
+                get_Q(ready, procs_num, q);
+                if (strlen(q) == 0)
+                    printf("time %dms: Process %c started using the CPU for %dms burst [Q <empty>]\n", 
+                    t, ready[0]->id, ready[0]->remain_sample_t + ready[0]->arrival_t - t);
+                else
+                    printf("time %dms: Process %c started using the CPU for %dms burst [Q %s]\n",
+                    t, ready[0]->id, ready[0]->remain_sample_t + ready[0]->arrival_t - t, q); 
             }
         }
     }

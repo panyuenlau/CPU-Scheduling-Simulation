@@ -36,6 +36,7 @@ float alpha; // defined as a global variable for ease
 void FCFS(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_ready);
 void SJF(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_ready);
 void SRT(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_ready);
+void RR(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_ready, int slice, char *rr_add);
 
 
 /*Some helper functions*/
@@ -46,19 +47,22 @@ int sort (const void * a, const void * b);
 
 void get_Q (Proc * ready[], int procs_num, char * queue);
 
-int append_io_to_ready_queue (Proc * ready_procs[], Proc * procs, int procs_num, int * ctr_ready, int t);
-int append_new_to_ready_queue (Proc * ready_procs[], Proc * procs, int procs_num, int * ctr_ready, int t);
+int append_io_to_ready_queue (Proc * ready_procs[], Proc * procs, int procs_num, int * ctr_ready, int t, bool add);
+int append_new_to_ready_queue (Proc * ready_procs[], Proc * procs, int procs_num, int * ctr_ready, int t, bool add);
 
 void sort_queue (Proc * ready[], int ctr_ready, bool srt_sort);
 
 void burst_begin (Proc * proc, int t);
+bool RR_burst_begin (Proc * proc, int t, int slice);
 
 int update_est_burst (Proc * proc, int cs_t, int t);
+int RR_check_burst (Proc * ready[], int cs_t, int t, int slice, int procs_num, int ctr_ready);
 void update_remain_t (Proc * procs, int proc_num);
 
 void rm_running_proc (Proc * ready[], int procs_num, int * ctr_ready);
 
 int check_proc_completion (Proc * ready[], int procs_num, int t);
+int RR_check_proc_completion (Proc * ready[], int procs_num, int t, int ctr_ready);
 
 void cxt_s_in (Proc * proc[], int cs_t, int t);
 void cxt_s_out (Proc * proc, int cs_t, int t);
@@ -70,6 +74,7 @@ int check_all_procs(Proc *procs, int procs_num);
 
 /*Check the ready queue (and begin to burst) before appending new ready procs*/
 void check_rdy_que(Proc *procs,Proc **ready, int cs_t, int procs_num, int t,  bool srt_flag, int ctr_ready);
+void RR_check_rdy_que(Proc *procs,Proc **ready, int cs_t, int procs_num, int t, int ctr_ready, int slice);
 
 void check_cpub_context(Proc **ready, int cs_t, int procs_num, int t, int *ctr_ready);
 
