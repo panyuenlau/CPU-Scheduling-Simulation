@@ -1,11 +1,15 @@
 #include "proc.h"
 
-void FCFS(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_ready)
+void RR(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_ready, int slice, char *rr_add)
 {
+    // Optional setting rr_add: append return process to the BEGINNING or END
+    bool add = true;
+    if (strcmp(rr_add, "BEGINNING") == 0)
+        add = false;
     for (int procs_ctr = 0; procs_ctr < procs_num; procs_ctr++)
     {
         if (procs[procs_ctr].cpu_b > 1)
-            printf("Process %c [NEW] (arrival time %d ms) %d CPU bursts\n", procs[procs_ctr].id,
+            printf("Process %c [NEW] (arrival time %d ms) %d CPU bursts\n", procs[procs_ctr].id, 
             procs[procs_ctr].arrival_t, procs[procs_ctr].cpu_b);
         else
         {
@@ -14,39 +18,24 @@ void FCFS(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_rea
         }
         
     }
-    printf("time %dms: Simulator started for FCFS [Q <empty>]\n", t);
-    
+    printf("time %dms: Simulator started for RR [Q <empty>]\n", t);
+
     // Time starts
     while (1)
     {
         // Step 1: Check if all processes complete
         if (check_all_procs(procs, procs_num) == 1) 
             break;
-        
+
         // Step 1.5: Check the ready queue (and begin to burst) before appending new ready procs
-        if (ready[0] != NULL)
-        {
-            if (ready[0]->stat == 2)
-            {
-                cxt_s_in(ready, cs_t, t);
-            }
-            if (ready[0]->stat == 5 && ready[0]->arrival_t == t)
-            {
-                burst_begin(ready[0], t);
-                char q[60];
-                get_Q(ready, procs_num, q);
-                if (strlen(q) == 0)
-                    printf("time %dms: Process %c started using the CPU for %dms burst [Q <empty>]\n", t, ready[0]->id, ready[0]->arrival_t - t);
-                else
-                    printf("time %dms: Process %c started using the CPU for %dms burst [Q %s]\n", t, ready[0]->id, ready[0]->arrival_t - t, q);
-            }
-        }
+        // check_rdy_que(procs,ready, cs_t, procs_num, t, false, ctr_ready, false);
+        RR_check_rdy_que(procs, ready, cs_t, procs_num, t, ctr_ready, slice);
 
         // Step 2: Check if CPU burst/context switch completes
         if (ready[0] != NULL)
         {
-            int last_tau = update_est_burst(ready[0], cs_t, t);
-            if (last_tau)
+            int rc = RR_check_burst(ready, cs_t, t, slice, procs_num, ctr_ready);
+            if (rc == 1)
             {
                 char q[60];
                 get_Q(ready, procs_num, q);
@@ -81,73 +70,73 @@ void FCFS(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_rea
                         printf("time %dms: Process %c terminated [Q %s]\n", t, ready[0]->id, q);
                 }
             }
-            int rc = check_proc_completion(ready, procs_num, t);
+            rc = RR_check_proc_completion(ready, procs_num, t, ctr_ready);
             if (rc == 1 || rc == 2)
             {   
                 rm_running_proc(ready, procs_num, &ctr_ready);
             }
+            else if (rc == 3)
+            {
+                Proc *tmp = ready[0];
+                rm_running_proc(ready, procs_num, &ctr_ready);
+                ready[ctr_ready] = tmp;
+                ctr_ready ++;
+            }
         }
-        
         
         // Step 3: Fill in the ready queue
-        int start = append_io_to_ready_queue(ready, procs, procs_num, &ctr_ready, t, false);
-        Proc * temp_ready[26][26];
-        int temp = 0;
-        while(start + temp < ctr_ready)
+        int start = append_io_to_ready_queue(ready, procs, procs_num, &ctr_ready, t, add);
+        if (add)
         {
-            int i;
-            for (i = 0; i <= start + temp; i++)
+            Proc * temp_ready[26][26];
+            int temp = 0;
+            while(start + temp < ctr_ready)
             {
-                temp_ready[temp][i] = ready[i];
+                int i;
+                for (i = 0; i <= start + temp; i++)
+                {
+                    temp_ready[temp][i] = ready[i];
+                }
+                temp_ready[temp][i] = NULL;
+                temp ++;
             }
-            temp_ready[temp][i] = NULL;
-            temp ++;
-        }
-        for (int j = start; j < ctr_ready; j++)
-        {
-            char q[60];
-            get_Q(temp_ready[j - start], procs_num, q);
-            printf("time %dms: Process %c completed I/O; added to ready queue [Q %s]\n", t, ready[j]->id, q);
-        }
-
-        start = append_new_to_ready_queue(ready, procs, procs_num, &ctr_ready, t, false);
-        temp = 0;
-        while(start + temp < ctr_ready)
-        {
-            int i;
-            for (i = 0; i <= start + temp; i++)
+            for (int j = start; j < ctr_ready; j++)
             {
-                temp_ready[temp][i] = ready[i];
+                char q[60];
+                get_Q(temp_ready[j - start], procs_num, q);
+                printf("time %dms: Process %c completed I/O; added to ready queue [Q %s]\n", t, ready[j]->id, q);
             }
-            temp_ready[temp][i] = NULL;
-            temp ++;
         }
-        for (int j = start; j < ctr_ready; j++)
+        
+        start = append_new_to_ready_queue(ready, procs, procs_num, &ctr_ready, t, add);
+        if (add)
         {
-            char q[60];
-            get_Q(temp_ready[j - start], procs_num, q);
-            printf("time %dms: Process %c arrived; added to ready queue [Q %s]\n", t, ready[j]->id, q);
+            Proc * temp_ready[26][26];
+            int temp = 0;
+            while(start + temp < ctr_ready)
+            {
+                int i;
+                for (i = 0; i <= start + temp; i++)
+                {
+                    temp_ready[temp][i] = ready[i];
+                }
+                temp_ready[temp][i] = NULL;
+                temp ++;
+            }
+            for (int j = start; j < ctr_ready; j++)
+            {
+                char q[60];
+                get_Q(temp_ready[j - start], procs_num, q);
+                printf("time %dms: Process %c arrived; added to ready queue [Q %s]\n", t, ready[j]->id, q);
+            }
         }
 
         // Step 4: Begin to burst/context switch on to CPU
-        if (ready[0] != NULL)
-        {
-            if (ready[0]->stat == 2)
-            {
-                cxt_s_in(ready, cs_t, t);
-            }
-            if (ready[0]->stat == 5 && ready[0]->arrival_t == t)
-            {
-                burst_begin(ready[0], t);
-                char q[60];
-                get_Q(ready, procs_num, q);
-                if (strlen(q) == 0)
-                    printf("time %dms: Process %c started using the CPU for %dms burst [Q <empty>]\n", t, ready[0]->id, ready[0]->arrival_t - t);
-                else
-                    printf("time %dms: Process %c started using the CPU for %dms burst [Q %s]\n", t, ready[0]->id, ready[0]->arrival_t - t, q);
-            }
-        }
+        // check_rdy_que(procs, ready, cs_t, procs_num, t, false, ctr_ready, false);
+        RR_check_rdy_que(procs, ready, cs_t, procs_num, t, ctr_ready, slice);
+
+        // printf("time = %d\n", t);
         t++;
     }
-    printf("time %dms: Simulator ended for FCFS [Q <empty>]\n", --t);
+    printf("time %dms: Simulator ended for RR [Q <empty>]\n", --t);
 }
