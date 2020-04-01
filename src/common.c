@@ -51,7 +51,6 @@ void gen_procs(Proc *procs, int seed, int procs_num, int ub, double lambda)
         procs[i].remain_sample_t = 0;
         procs[i].original_burst_t = -1; // if the original_burst_t stays at -1, meaning no preemption occured to the running process
         procs[i].preempt = false;
-        procs[i]
     }
 }
 
