@@ -197,6 +197,7 @@ int append_io_to_ready_queue (Proc * ready_procs[], Proc * procs, int procs_num,
                     temp_ready[k] = ready_procs[m];
                     k++;
                 }
+                temp_ready[k] = NULL;
                 char q[60];
                 get_Q(temp_ready, procs_num, q);
                 printf("time %dms: Process %c completed I/O; added to ready queue [Q %s]\n", t, ready_procs[j]->id, q);
@@ -204,10 +205,6 @@ int append_io_to_ready_queue (Proc * ready_procs[], Proc * procs, int procs_num,
             *ctr_ready += ctr;
             // print_info(ready_procs[0], procs_num, *ctr_ready);
         }
-        else
-        {
-            return 0;
-        } 
     }
     return idx;
 }
@@ -238,51 +235,44 @@ int append_new_to_ready_queue (Proc * ready_procs[], Proc * procs, int procs_num
         }
         return idx;
     }
-    else 
+    else if (ctr > 0)
     {
-        if (ctr > 0)
+        int i = 0;
+        // if (ready_procs[0] != NULL && ready_procs[0]->stat == 2)
+        //     i = 0;
+        // else if (ready_procs[0] == NULL)
+        //     i = 0;
+        // printf("add and ctr_ready = %d\n", *ctr_ready);
+        if (*ctr_ready != 0)
         {
-            int i = 0;
-            // if (ready_procs[0] != NULL && ready_procs[0]->stat == 2)
-            //     i = 0;
-            // else if (ready_procs[0] == NULL)
-            //     i = 0;
-            // printf("add and ctr_ready = %d\n", *ctr_ready);
-            if (*ctr_ready != 0)
+            if (ready_procs[0]->stat != 2)
+                i = 1;
+            for (int j = (*ctr_ready - 1); j >= i; j--)
             {
-                if (ready_procs[0]->stat != 2)
-                    i = 1;
-                for (int j = (*ctr_ready - 1); j >= i; j--)
-                {
-                    ready_procs[j + ctr] = ready_procs[j];
-                }
+                ready_procs[j + ctr] = ready_procs[j];
             }
-            int c = 0;
-            for (int j = i; j < i + ctr; j++)
-            {
-                ready_procs[j] = &procs[(int)ready[c++].id - 65];
-                ready_procs[j]->stat = 2;
-                Proc* temp_ready[26];
-                int k = 0;
-                for (; k <= j; k++)
-                    temp_ready[k] = ready_procs[k];
-                for (int m = ctr + i; m < *ctr_ready + ctr; m++)
-                {
-                    temp_ready[k] = ready_procs[m];
-                    k++;
-                }
-                char q[60];
-                get_Q(temp_ready, procs_num, q);
-                printf("time %dms: Process %c arrived; added to ready queue [Q %s]\n", t, ready_procs[j]->id, q);
-            }
-            *ctr_ready += ctr;
-            // print_info(ready_procs[0], procs_num, *ctr_ready);
         }
-        else
+        int c = 0;
+        for (int j = i; j < i + ctr; j++)
         {
-            return 0;
+            ready_procs[j] = &procs[(int)ready[c++].id - 65];
+            ready_procs[j]->stat = 2;
+            Proc* temp_ready[26];
+            int k = 0;
+            for (; k <= j; k++)
+                temp_ready[k] = ready_procs[k];
+            for (int m = ctr + i; m < *ctr_ready + ctr; m++)
+            {
+                temp_ready[k] = ready_procs[m];
+                k++;
+            }
+            temp_ready[k] = NULL;
+            char q[60];
+            get_Q(temp_ready, procs_num, q);
+            printf("time %dms: Process %c arrived; added to ready queue [Q %s]\n", t, ready_procs[j]->id, q);
         }
-        
+        *ctr_ready += ctr;
+        // print_info(ready_procs[0], procs_num, *ctr_ready);
     }
     return idx;
 }
