@@ -90,7 +90,7 @@ void FCFS(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_rea
         
         
         // Step 3: Fill in the ready queue
-        int start = append_io_to_ready_queue(ready, procs, procs_num, &ctr_ready, t, false);
+        int start = append_io_to_ready_queue(ready, procs, procs_num, &ctr_ready, t, true);
         Proc * temp_ready[26][26];
         int temp = 0;
         while(start + temp < ctr_ready)
@@ -110,7 +110,7 @@ void FCFS(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_rea
             printf("time %dms: Process %c completed I/O; added to ready queue [Q %s]\n", t, ready[j]->id, q);
         }
 
-        start = append_new_to_ready_queue(ready, procs, procs_num, &ctr_ready, t, false);
+        start = append_new_to_ready_queue(ready, procs, procs_num, &ctr_ready, t, true);
         temp = 0;
         while(start + temp < ctr_ready)
         {
@@ -149,5 +149,5 @@ void FCFS(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_rea
         }
         t++;
     }
-    printf("time %dms: Simulator ended for FCFS [Q <empty>]\n", --t);
+    printf("time %dms: Simulator ended for FCFS [Q <empty>]\n\n", --t);
 }

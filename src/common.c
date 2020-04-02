@@ -164,45 +164,52 @@ int append_io_to_ready_queue (Proc * ready_procs[], Proc * procs, int procs_num,
         }
         return idx;
     }
-    else if (ctr > 0)
+    else 
     {
-        int i = 0;
-        // if (ready_procs[0] != NULL && ready_procs[0]->stat == 2)
-        //     i = 0;
-        // else if (ready_procs[0] == NULL)
-        //     i = 0;
-        
-        if (*ctr_ready != 0)
+        if (ctr > 0)
         {
-            if (ready_procs[0]->stat != 2)
-                i = 1;
-            for (int j = (*ctr_ready - 1); j >= i; j--)
+            int i = 0;
+            // if (ready_procs[0] != NULL && ready_procs[0]->stat == 2)
+            //     i = 0;
+            // else if (ready_procs[0] == NULL)
+            //     i = 0;
+            
+            if (*ctr_ready != 0)
             {
-                ready_procs[j + ctr] = ready_procs[j];
+                if (ready_procs[0]->stat != 2)
+                    i = 1;
+                for (int j = (*ctr_ready - 1); j >= i; j--)
+                {
+                    ready_procs[j + ctr] = ready_procs[j];
+                }
             }
+            int c = 0;
+            for (int j = i; j < i + ctr; j++)
+            {
+                ready_procs[j] = &procs[(int)ready[c++].id - 65];
+                ready_procs[j]->stat = 2;
+                Proc* temp_ready[26];
+                int k = 0;
+                for (; k <= j; k++)
+                    temp_ready[k] = ready_procs[k];
+                for (int m = ctr + i; m < *ctr_ready + ctr; m++)
+                {
+                    temp_ready[k] = ready_procs[m];
+                    k++;
+                }
+                char q[60];
+                get_Q(temp_ready, procs_num, q);
+                printf("time %dms: Process %c completed I/O; added to ready queue [Q %s]\n", t, ready_procs[j]->id, q);
+            }
+            *ctr_ready += ctr;
+            // print_info(ready_procs[0], procs_num, *ctr_ready);
         }
-        int c = 0;
-        for (int j = i; j < i + ctr; j++)
+        else
         {
-            ready_procs[j] = &procs[(int)ready[c++].id - 65];
-            ready_procs[j]->stat = 2;
-            Proc* temp_ready[26];
-            int k = 0;
-            for (; k <= j; k++)
-                temp_ready[k] = ready_procs[k];
-            for (int m = ctr + i; m < *ctr_ready + ctr; m++)
-            {
-                temp_ready[k] = ready_procs[m];
-                k++;
-            }
-            char q[60];
-            get_Q(temp_ready, procs_num, q);
-            printf("time %dms: Process %c completed I/O; added to ready queue [Q %s]\n", t, ready_procs[j]->id, q);
-        }
-        *ctr_ready += ctr;
-        // print_info(ready_procs[0], procs_num, *ctr_ready);
+            return 0;
+        } 
     }
-    return 0;
+    return idx;
 }
 
 /*Append a new process to the ready queue, while applying the sorting rules*/
@@ -231,45 +238,53 @@ int append_new_to_ready_queue (Proc * ready_procs[], Proc * procs, int procs_num
         }
         return idx;
     }
-    else if (ctr > 0)
+    else 
     {
-        int i = 0;
-        // if (ready_procs[0] != NULL && ready_procs[0]->stat == 2)
-        //     i = 0;
-        // else if (ready_procs[0] == NULL)
-        //     i = 0;
-        // printf("add and ctr_ready = %d\n", *ctr_ready);
-        if (*ctr_ready != 0)
+        if (ctr > 0)
         {
-            if (ready_procs[0]->stat != 2)
-                i = 1;
-            for (int j = (*ctr_ready - 1); j >= i; j--)
+            int i = 0;
+            // if (ready_procs[0] != NULL && ready_procs[0]->stat == 2)
+            //     i = 0;
+            // else if (ready_procs[0] == NULL)
+            //     i = 0;
+            // printf("add and ctr_ready = %d\n", *ctr_ready);
+            if (*ctr_ready != 0)
             {
-                ready_procs[j + ctr] = ready_procs[j];
+                if (ready_procs[0]->stat != 2)
+                    i = 1;
+                for (int j = (*ctr_ready - 1); j >= i; j--)
+                {
+                    ready_procs[j + ctr] = ready_procs[j];
+                }
             }
+            int c = 0;
+            for (int j = i; j < i + ctr; j++)
+            {
+                ready_procs[j] = &procs[(int)ready[c++].id - 65];
+                ready_procs[j]->stat = 2;
+                Proc* temp_ready[26];
+                int k = 0;
+                for (; k <= j; k++)
+                    temp_ready[k] = ready_procs[k];
+                for (int m = ctr + i; m < *ctr_ready + ctr; m++)
+                {
+                    temp_ready[k] = ready_procs[m];
+                    k++;
+                }
+                char q[60];
+                get_Q(temp_ready, procs_num, q);
+                printf("time %dms: Process %c arrived; added to ready queue [Q %s]\n", t, ready_procs[j]->id, q);
+            }
+            *ctr_ready += ctr;
+            // print_info(ready_procs[0], procs_num, *ctr_ready);
         }
-        int c = 0;
-        for (int j = i; j < i + ctr; j++)
+        else
         {
-            ready_procs[j] = &procs[(int)ready[c++].id - 65];
-            ready_procs[j]->stat = 2;
-            Proc* temp_ready[26];
-            int k = 0;
-            for (; k <= j; k++)
-                temp_ready[k] = ready_procs[k];
-            for (int m = ctr + i; m < *ctr_ready + ctr; m++)
-            {
-                temp_ready[k] = ready_procs[m];
-                k++;
-            }
-            char q[60];
-            get_Q(temp_ready, procs_num, q);
-            printf("time %dms: Process %c arrived; added to ready queue [Q %s]\n", t, ready_procs[j]->id, q);
+            return 0;
         }
-        *ctr_ready += ctr;
-        // print_info(ready_procs[0], procs_num, *ctr_ready);
+        
     }
-    return 0;
+    return idx;
 }
 
 /*Remove a running process from the ready queue*/
@@ -495,7 +510,7 @@ int RR_check_burst (Proc * ready[], int cs_t, int t, int slice, int procs_num, i
 {
     if (ready[0]->stat == 4 && ready[0]->arrival_t == t)
     {   
-        if (ready[1] != NULL)
+        if (procs_num > 1 && ready[1] != NULL)
         {
             if (ready[0]->remain_sample_t != 0)
             {

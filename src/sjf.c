@@ -31,7 +31,7 @@ void SJF(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_read
         check_cpub_context(ready, cs_t, procs_num, t, &ctr_ready);
         
         // Step 3: Fill in the ready queue
-        int start = append_io_to_ready_queue(ready, procs, procs_num, &ctr_ready, t, false);
+        int start = append_io_to_ready_queue(ready, procs, procs_num, &ctr_ready, t, true);
         Proc * temp_ready[26][26];
         int temp = 0;
         while(start + temp < ctr_ready)
@@ -54,7 +54,7 @@ void SJF(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_read
         }  
         sort_queue (ready, ctr_ready, false);
 
-        start = append_new_to_ready_queue(ready, procs, procs_num, &ctr_ready, t, false);
+        start = append_new_to_ready_queue(ready, procs, procs_num, &ctr_ready, t, true);
         temp = 0;
         while(start + temp < ctr_ready)
         {
@@ -81,5 +81,5 @@ void SJF(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_read
         check_rdy_que(procs, ready, cs_t, procs_num, t, false, ctr_ready);
         t++;
     }
-    printf("time %dms: Simulator ended for SJF [Q <empty>]\n", --t);
+    printf("time %dms: Simulator ended for SJF [Q <empty>]\n\n", --t);
 }
