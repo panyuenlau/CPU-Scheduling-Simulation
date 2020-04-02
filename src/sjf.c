@@ -46,11 +46,13 @@ void SJF(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_read
         }
         for (int j = start; j < ctr_ready; j++)
         {
-            printf("time %dms: Process %c (tau %dms) completed I/O; ", t, ready[j]->id, ready[j]->tau);
+            if (t <= 999)
+                printf("time %dms: Process %c (tau %dms) completed I/O; ", t, ready[j]->id, ready[j]->tau);
             sort_queue(temp_ready[j - start], j + 1, false);
             char q[60];
             get_Q(temp_ready[j - start], procs_num, q);
-            printf("added to ready queue [Q %s]\n", q);
+            if (t <= 999)
+                printf("added to ready queue [Q %s]\n", q);
         }  
         sort_queue (ready, ctr_ready, false);
 
@@ -68,11 +70,13 @@ void SJF(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_read
         }
         for (int j = start; j < ctr_ready; j++)
         {
-            printf("time %dms: Process %c (tau %dms) arrived; ", t, ready[j]->id, ready[j]->tau);
+            if (t <= 999)
+                printf("time %dms: Process %c (tau %dms) arrived; ", t, ready[j]->id, ready[j]->tau);
             sort_queue(temp_ready[j - start], j + 1, false);
             char q[60];
             get_Q(temp_ready[j - start], procs_num, q);
-            printf("added to ready queue [Q %s]\n", q);
+            if (t <= 999)
+                printf("added to ready queue [Q %s]\n", q);
         }
         sort_queue (ready, ctr_ready, false);
 

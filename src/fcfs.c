@@ -35,10 +35,14 @@ void FCFS(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_rea
                 burst_begin(ready[0], t);
                 char q[60];
                 get_Q(ready, procs_num, q);
-                if (strlen(q) == 0)
-                    printf("time %dms: Process %c started using the CPU for %dms burst [Q <empty>]\n", t, ready[0]->id, ready[0]->arrival_t - t);
-                else
-                    printf("time %dms: Process %c started using the CPU for %dms burst [Q %s]\n", t, ready[0]->id, ready[0]->arrival_t - t, q);
+                if (t <= 999)
+                {
+                    if (strlen(q) == 0)
+                        printf("time %dms: Process %c started using the CPU for %dms burst [Q <empty>]\n", t, ready[0]->id, ready[0]->arrival_t - t);
+                    else
+                        printf("time %dms: Process %c started using the CPU for %dms burst [Q %s]\n", t, ready[0]->id, ready[0]->arrival_t - t, q);
+
+                }
             }
         }
 
@@ -50,33 +54,42 @@ void FCFS(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_rea
             {
                 char q[60];
                 get_Q(ready, procs_num, q);
-                if (strlen(q) == 0)
+                if (t <= 999)
                 {
-                    if (ready[0]->cpu_b == 1)
+                    if (strlen(q) == 0)
                     {
-                        printf("time %dms: Process %c completed a CPU burst; %d burst to go [Q <empty>]\n", t, ready[0]->id, ready[0]->cpu_b);
-                        printf("time %dms: Process %c switching out of CPU; will block on I/O until time %dms [Q <empty>]\n", t, ready[0]->id, ready[0]->arrival_t + ready[0]->io_t[0]);
-                    }                            
-                    else if (ready[0]->cpu_b > 1)
-                    {
-                        printf("time %dms: Process %c completed a CPU burst; %d bursts to go [Q <empty>]\n", t, ready[0]->id, ready[0]->cpu_b);
-                        printf("time %dms: Process %c switching out of CPU; will block on I/O until time %dms [Q <empty>]\n", t, ready[0]->id, ready[0]->arrival_t + ready[0]->io_t[0]);
+                        if (ready[0]->cpu_b == 1)
+                        {
+                            printf("time %dms: Process %c completed a CPU burst; %d burst to go [Q <empty>]\n", t, ready[0]->id, ready[0]->cpu_b);
+                            printf("time %dms: Process %c switching out of CPU; will block on I/O until time %dms [Q <empty>]\n", t, ready[0]->id, ready[0]->arrival_t + ready[0]->io_t[0]);
+                        }                            
+                        else if (ready[0]->cpu_b > 1)
+                        {
+                            printf("time %dms: Process %c completed a CPU burst; %d bursts to go [Q <empty>]\n", t, ready[0]->id, ready[0]->cpu_b);
+                            printf("time %dms: Process %c switching out of CPU; will block on I/O until time %dms [Q <empty>]\n", t, ready[0]->id, ready[0]->arrival_t + ready[0]->io_t[0]);
+                        }
                     }
-                    else 
-                        printf("time %dms: Process %c terminated [Q <empty>]\n", t, ready[0]->id);
+                    else
+                    {
+                        if (ready[0]->cpu_b == 1)
+                        {
+                            printf("time %dms: Process %c completed a CPU burst; %d burst to go [Q %s]\n", t, ready[0]->id, ready[0]->cpu_b, q);
+                            printf("time %dms: Process %c switching out of CPU; will block on I/O until time %dms [Q %s]\n", t, ready[0]->id, ready[0]->arrival_t + ready[0]->io_t[0], q);
+                        }
+                        else if (ready[0]->cpu_b > 1)
+                        {
+                            printf("time %dms: Process %c completed a CPU burst; %d bursts to go [Q %s]\n", t, ready[0]->id, ready[0]->cpu_b, q);
+                            printf("time %dms: Process %c switching out of CPU; will block on I/O until time %dms [Q %s]\n", t, ready[0]->id, ready[0]->arrival_t + ready[0]->io_t[0], q);
+                        }
+                        else
+                            printf("time %dms: Process %c terminated [Q %s]\n", t, ready[0]->id, q);
+                    }
                 }
-                else
+
+                if (ready[0]->cpu_b == 0)
                 {
-                    if (ready[0]->cpu_b == 1)
-                    {
-                        printf("time %dms: Process %c completed a CPU burst; %d burst to go [Q %s]\n", t, ready[0]->id, ready[0]->cpu_b, q);
-                        printf("time %dms: Process %c switching out of CPU; will block on I/O until time %dms [Q %s]\n", t, ready[0]->id, ready[0]->arrival_t + ready[0]->io_t[0], q);
-                    }
-                    else if (ready[0]->cpu_b > 1)
-                    {
-                        printf("time %dms: Process %c completed a CPU burst; %d bursts to go [Q %s]\n", t, ready[0]->id, ready[0]->cpu_b, q);
-                        printf("time %dms: Process %c switching out of CPU; will block on I/O until time %dms [Q %s]\n", t, ready[0]->id, ready[0]->arrival_t + ready[0]->io_t[0], q);
-                    }
+                    if (strlen(q) == 0)
+                        printf("time %dms: Process %c terminated [Q <empty>]\n", t, ready[0]->id);
                     else
                         printf("time %dms: Process %c terminated [Q %s]\n", t, ready[0]->id, q);
                 }
@@ -107,7 +120,8 @@ void FCFS(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_rea
         {
             char q[60];
             get_Q(temp_ready[j - start], procs_num, q);
-            printf("time %dms: Process %c completed I/O; added to ready queue [Q %s]\n", t, ready[j]->id, q);
+            if (t <= 999)
+                printf("time %dms: Process %c completed I/O; added to ready queue [Q %s]\n", t, ready[j]->id, q);
         }
 
         start = append_new_to_ready_queue(ready, procs, procs_num, &ctr_ready, t, true);
@@ -126,7 +140,8 @@ void FCFS(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_rea
         {
             char q[60];
             get_Q(temp_ready[j - start], procs_num, q);
-            printf("time %dms: Process %c arrived; added to ready queue [Q %s]\n", t, ready[j]->id, q);
+            if (t <= 999)
+                printf("time %dms: Process %c arrived; added to ready queue [Q %s]\n", t, ready[j]->id, q);
         }
 
         // Step 4: Begin to burst/context switch on to CPU
@@ -141,10 +156,14 @@ void FCFS(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_rea
                 burst_begin(ready[0], t);
                 char q[60];
                 get_Q(ready, procs_num, q);
-                if (strlen(q) == 0)
-                    printf("time %dms: Process %c started using the CPU for %dms burst [Q <empty>]\n", t, ready[0]->id, ready[0]->arrival_t - t);
-                else
-                    printf("time %dms: Process %c started using the CPU for %dms burst [Q %s]\n", t, ready[0]->id, ready[0]->arrival_t - t, q);
+                if (t <= 999)
+                {
+                    if (strlen(q) == 0)
+                        printf("time %dms: Process %c started using the CPU for %dms burst [Q <empty>]\n", t, ready[0]->id, ready[0]->arrival_t - t);
+                    else
+                        printf("time %dms: Process %c started using the CPU for %dms burst [Q %s]\n", t, ready[0]->id, ready[0]->arrival_t - t, q);
+
+                }
             }
         }
         t++;
