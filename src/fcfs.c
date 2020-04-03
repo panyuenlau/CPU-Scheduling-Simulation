@@ -1,6 +1,6 @@
 #include "proc.h"
 
-void FCFS(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_ready)
+void FCFS(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_ready, int fd)
 {
     for (int procs_ctr = 0; procs_ctr < procs_num; procs_ctr++)
     {
@@ -16,6 +16,7 @@ void FCFS(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_rea
     }
     printf("time %dms: Simulator started for FCFS [Q <empty>]\n", t);
     
+
     // Time starts
     while (1)
     {
@@ -169,4 +170,19 @@ void FCFS(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_rea
         t++;
     }
     printf("time %dms: Simulator ended for FCFS [Q <empty>]\n\n", --t);
+    
+    int wait_t = 0;
+    int wait_t_ctr = 0;
+    for (int i = 0; i < procs_num; i++)
+    {
+        wait_t += procs[i].wait_t;
+        wait_t_ctr += procs[i].wait_t_ctr;
+    }
+    float avg_wait_t = (float)wait_t / wait_t_ctr;
+    char buffer[100];
+    int n = snprintf(buffer, 100,
+                    "-- average wait time: %.3f ms\n", avg_wait_t);
+    buffer[n] = '\0';
+    if (write(fd, buffer, strlen(buffer)) < 0)
+        perror("write failed");
 }
