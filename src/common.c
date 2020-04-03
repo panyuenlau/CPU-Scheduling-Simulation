@@ -200,10 +200,10 @@ int append_io_to_ready_queue (Proc * ready_procs[], Proc * procs, int procs_num,
                 temp_ready[k] = NULL;
                 char q[60];
                 get_Q(temp_ready, procs_num, q);
-                printf("time %dms: Process %c completed I/O; added to ready queue [Q %s]\n", t, ready_procs[j]->id, q);
+                if (t <= 999)
+                    printf("time %dms: Process %c completed I/O; added to ready queue [Q %s]\n", t, ready_procs[j]->id, q);
             }
             *ctr_ready += ctr;
-            // print_info(ready_procs[0], procs_num, *ctr_ready);
         }
     }
     return idx;
@@ -238,11 +238,7 @@ int append_new_to_ready_queue (Proc * ready_procs[], Proc * procs, int procs_num
     else if (ctr > 0)
     {
         int i = 0;
-        // if (ready_procs[0] != NULL && ready_procs[0]->stat == 2)
-        //     i = 0;
-        // else if (ready_procs[0] == NULL)
-        //     i = 0;
-        // printf("add and ctr_ready = %d\n", *ctr_ready);
+
         if (*ctr_ready != 0)
         {
             if (ready_procs[0]->stat != 2)
@@ -269,10 +265,10 @@ int append_new_to_ready_queue (Proc * ready_procs[], Proc * procs, int procs_num
             temp_ready[k] = NULL;
             char q[60];
             get_Q(temp_ready, procs_num, q);
-            printf("time %dms: Process %c arrived; added to ready queue [Q %s]\n", t, ready_procs[j]->id, q);
+            if (t <= 999)
+                printf("time %dms: Process %c arrived; added to ready queue [Q %s]\n", t, ready_procs[j]->id, q);
         }
         *ctr_ready += ctr;
-        // print_info(ready_procs[0], procs_num, *ctr_ready);
     }
     return idx;
 }
@@ -506,7 +502,8 @@ int RR_check_burst (Proc * ready[], int cs_t, int t, int slice, int procs_num, i
             {
                 char q[60];
                 get_Q(ready, procs_num, q);
-                printf("time %dms: Time slice expired; process %c preempted with %dms to go [Q %s]\n", 
+                if (t <= 999)
+                    printf("time %dms: Time slice expired; process %c preempted with %dms to go [Q %s]\n", 
                 t, ready[0]->id, ready[0]->remain_sample_t, q);
                 cxt_s_out(ready[0], cs_t, t);
                 return 0;
@@ -525,7 +522,8 @@ int RR_check_burst (Proc * ready[], int cs_t, int t, int slice, int procs_num, i
             else
             {
                 RR_burst_begin(ready[0], t, slice);
-                printf("time %dms: Time slice expired; no preemption because ready queue is empty [Q <empty>]\n", t);
+                if (t <= 999)
+                    printf("time %dms: Time slice expired; no preemption because ready queue is empty [Q <empty>]\n", t);
                 return 0;   
             }
         }
@@ -539,7 +537,8 @@ bool check_preem (Proc *procs, Proc **ready, char q[], int procs_num, int t, int
     {
         if (ready[0]->remain_tau > ready[1]->remain_tau)
         {
-            printf("time %dms: Process %c (tau %dms) will preempt %c [Q %s]\n", t, ready[1]->id, ready[1]->tau, ready[0]->id, q);
+            if (t <= 999)
+                printf("time %dms: Process %c (tau %dms) will preempt %c [Q %s]\n", t, ready[1]->id, ready[1]->tau, ready[0]->id, q);
 
             // ready[0]: process that needs to be preempted
             // ready[1]: process that will preempt ready[0]
@@ -659,24 +658,33 @@ void check_rdy_que(Proc *procs,Proc **ready, int cs_t, int procs_num, int t,  bo
             if (srt_flag)
             {
                 if (strlen(q) == 0)
-                    printf("time %dms: Process %c (tau %dms) started using the CPU with %dms burst remaining [Q <empty>]\n", 
-                    t, ready[0]->id, ready[0]->tau, ready[0]->remain_sample_t);
+                {
+                    if (t <= 999)
+                    {
+                        printf("time %dms: Process %c (tau %dms) started using the CPU with %dms burst remaining [Q <empty>]\n", 
+                        t, ready[0]->id, ready[0]->tau, ready[0]->remain_sample_t);                        
+                    }
+                }
                 else
                 {
-                    printf("time %dms: Process %c (tau %dms) started using the CPU with %dms burst remaining [Q %s]\n", 
-                    t, ready[0]->id, ready[0]->tau, ready[0]->remain_sample_t, q);
+                    if (t <= 999)
+                        printf("time %dms: Process %c (tau %dms) started using the CPU with %dms burst remaining [Q %s]\n", 
+                        t, ready[0]->id, ready[0]->tau, ready[0]->remain_sample_t, q);
                     /*Check preemption when the process starts to burst*/
                     check_preem(procs, ready, q, procs_num, t, cs_t, ctr_ready);
                 }
             }
             else
             {
-                if (strlen(q) == 0)
-                    printf("time %dms: Process %c (tau %dms) started using the CPU for %dms burst [Q <empty>]\n", 
-                    t, ready[0]->id, ready[0]->tau, ready[0]->arrival_t - t);
-                else
-                    printf("time %dms: Process %c (tau %dms) started using the CPU for %dms burst [Q %s]\n",
-                    t, ready[0]->id, ready[0]->tau, ready[0]->arrival_t - t, q);
+                if (t <= 999)
+                {
+                    if (strlen(q) == 0)
+                        printf("time %dms: Process %c (tau %dms) started using the CPU for %dms burst [Q <empty>]\n", 
+                        t, ready[0]->id, ready[0]->tau, ready[0]->arrival_t - t);
+                    else
+                        printf("time %dms: Process %c (tau %dms) started using the CPU for %dms burst [Q %s]\n",
+                        t, ready[0]->id, ready[0]->tau, ready[0]->arrival_t - t, q);
+                }
             }
         }
     }
@@ -697,23 +705,29 @@ void RR_check_rdy_que(Proc *procs,Proc **ready, int cs_t, int procs_num, int t, 
             {
                 char q[60];
                 get_Q(ready, procs_num, q);
-                if (strlen(q) == 0)
-                    printf("time %dms: Process %c started using the CPU with %dms burst remaining [Q <empty>]\n", 
-                    t, ready[0]->id, ready[0]->remain_sample_t + ready[0]->arrival_t - t);
-                else
-                    printf("time %dms: Process %c started using the CPU with %dms burst remaining [Q %s]\n",
-                    t, ready[0]->id, ready[0]->remain_sample_t + ready[0]->arrival_t - t, q);
+                if (t <= 999)
+                {
+                    if (strlen(q) == 0)
+                        printf("time %dms: Process %c started using the CPU with %dms burst remaining [Q <empty>]\n", 
+                        t, ready[0]->id, ready[0]->remain_sample_t + ready[0]->arrival_t - t);
+                    else
+                        printf("time %dms: Process %c started using the CPU with %dms burst remaining [Q %s]\n",
+                        t, ready[0]->id, ready[0]->remain_sample_t + ready[0]->arrival_t - t, q);
+                }
             }
             else
             {
                 char q[60];
                 get_Q(ready, procs_num, q);
-                if (strlen(q) == 0)
-                    printf("time %dms: Process %c started using the CPU for %dms burst [Q <empty>]\n", 
-                    t, ready[0]->id, ready[0]->remain_sample_t + ready[0]->arrival_t - t);
-                else
-                    printf("time %dms: Process %c started using the CPU for %dms burst [Q %s]\n",
-                    t, ready[0]->id, ready[0]->remain_sample_t + ready[0]->arrival_t - t, q); 
+                if (t <= 999)
+                {
+                    if (strlen(q) == 0)
+                        printf("time %dms: Process %c started using the CPU for %dms burst [Q <empty>]\n", 
+                        t, ready[0]->id, ready[0]->remain_sample_t + ready[0]->arrival_t - t);
+                    else
+                        printf("time %dms: Process %c started using the CPU for %dms burst [Q %s]\n",
+                        t, ready[0]->id, ready[0]->remain_sample_t + ready[0]->arrival_t - t, q); 
+                }
             }
         }
     }
@@ -730,37 +744,46 @@ void check_cpub_context(Proc **ready, int cs_t, int procs_num, int t, int *ctr_r
         {
             char q[60];
             get_Q(ready, procs_num, q);
-            if (strlen(q) == 0)
+            if (t <= 999)
             {
-                if (ready[0]->cpu_b == 1)
+                if (strlen(q) == 0)
                 {
-                    printf("time %dms: Process %c (tau %dms) completed a CPU burst; %d burst to go [Q <empty>]\n", t, ready[0]->id, last_tau, ready[0]->cpu_b);
-                    printf("time %dms: Recalculated tau = %dms for process %c [Q <empty>]\n", t, ready[0]->tau, ready[0]->id);
-                    printf("time %dms: Process %c switching out of CPU; will block on I/O until time %dms [Q <empty>]\n", t, ready[0]->id, ready[0]->arrival_t + ready[0]->io_t[0]);
-                }                            
-                else if (ready[0]->cpu_b > 1)
-                {
-                    printf("time %dms: Process %c (tau %dms) completed a CPU burst; %d bursts to go [Q <empty>]\n", t, ready[0]->id, last_tau, ready[0]->cpu_b);
-                    printf("time %dms: Recalculated tau = %dms for process %c [Q <empty>]\n", t, ready[0]->tau, ready[0]->id);
-                    printf("time %dms: Process %c switching out of CPU; will block on I/O until time %dms [Q <empty>]\n", t, ready[0]->id, ready[0]->arrival_t + ready[0]->io_t[0]);
+                    if (ready[0]->cpu_b == 1)
+                    {
+                        printf("time %dms: Process %c (tau %dms) completed a CPU burst; %d burst to go [Q <empty>]\n", t, ready[0]->id, last_tau, ready[0]->cpu_b);
+                        printf("time %dms: Recalculated tau = %dms for process %c [Q <empty>]\n", t, ready[0]->tau, ready[0]->id);
+                        printf("time %dms: Process %c switching out of CPU; will block on I/O until time %dms [Q <empty>]\n", t, ready[0]->id, ready[0]->arrival_t + ready[0]->io_t[0]);
+                    }                            
+                    else if (ready[0]->cpu_b > 1)
+                    {
+                        printf("time %dms: Process %c (tau %dms) completed a CPU burst; %d bursts to go [Q <empty>]\n", t, ready[0]->id, last_tau, ready[0]->cpu_b);
+                        printf("time %dms: Recalculated tau = %dms for process %c [Q <empty>]\n", t, ready[0]->tau, ready[0]->id);
+                        printf("time %dms: Process %c switching out of CPU; will block on I/O until time %dms [Q <empty>]\n", t, ready[0]->id, ready[0]->arrival_t + ready[0]->io_t[0]);
+                    }
                 }
-                else 
-                    printf("time %dms: Process %c terminated [Q <empty>]\n", t, ready[0]->id);
+                else
+                {
+                    if (ready[0]->cpu_b == 1)
+                    {
+                        printf("time %dms: Process %c (tau %dms) completed a CPU burst; %d burst to go [Q %s]\n", t, ready[0]->id, last_tau, ready[0]->cpu_b, q);
+                        printf("time %dms: Recalculated tau = %dms for process %c [Q %s]\n", t, ready[0]->tau, ready[0]->id, q);
+                        printf("time %dms: Process %c switching out of CPU; will block on I/O until time %dms [Q %s]\n", t, ready[0]->id, ready[0]->arrival_t + ready[0]->io_t[0], q);
+                    }
+                    else if (ready[0]->cpu_b > 1)
+                    {
+                        printf("time %dms: Process %c (tau %dms) completed a CPU burst; %d bursts to go [Q %s]\n", t, ready[0]->id, last_tau, ready[0]->cpu_b, q);
+                        printf("time %dms: Recalculated tau = %dms for process %c [Q %s]\n", t, ready[0]->tau, ready[0]->id, q);
+                        printf("time %dms: Process %c switching out of CPU; will block on I/O until time %dms [Q %s]\n", t, ready[0]->id, ready[0]->arrival_t + ready[0]->io_t[0], q);
+                    }
+                    else
+                        printf("time %dms: Process %c terminated [Q %s]\n", t, ready[0]->id, q);
+                }
             }
-            else
+
+            if (ready[0]->cpu_b == 0)
             {
-                if (ready[0]->cpu_b == 1)
-                {
-                    printf("time %dms: Process %c (tau %dms) completed a CPU burst; %d burst to go [Q %s]\n", t, ready[0]->id, last_tau, ready[0]->cpu_b, q);
-                    printf("time %dms: Recalculated tau = %dms for process %c [Q %s]\n", t, ready[0]->tau, ready[0]->id, q);
-                    printf("time %dms: Process %c switching out of CPU; will block on I/O until time %dms [Q %s]\n", t, ready[0]->id, ready[0]->arrival_t + ready[0]->io_t[0], q);
-                }
-                else if (ready[0]->cpu_b > 1)
-                {
-                    printf("time %dms: Process %c (tau %dms) completed a CPU burst; %d bursts to go [Q %s]\n", t, ready[0]->id, last_tau, ready[0]->cpu_b, q);
-                    printf("time %dms: Recalculated tau = %dms for process %c [Q %s]\n", t, ready[0]->tau, ready[0]->id, q);
-                    printf("time %dms: Process %c switching out of CPU; will block on I/O until time %dms [Q %s]\n", t, ready[0]->id, ready[0]->arrival_t + ready[0]->io_t[0], q);
-                }
+                if (strlen(q) == 0)
+                    printf("time %dms: Process %c terminated [Q <empty>]\n", t, ready[0]->id);
                 else
                     printf("time %dms: Process %c terminated [Q %s]\n", t, ready[0]->id, q);
             }

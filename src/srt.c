@@ -49,17 +49,21 @@ void SRT(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_read
         }
 
         for (int j = start; j < ctr_ready; j++)
-        {
-            printf("time %dms: Process %c (tau %dms) completed I/O; ", t, ready[j]->id, ready[j]->tau);
+        {   
+            if (t <= 999)
+                printf("time %dms: Process %c (tau %dms) completed I/O; ", t, ready[j]->id, ready[j]->tau);
             
             prem = check_preem_from_io(procs, procs_num, ready, j, t, ctr_ready, cs_t);
             sort_queue (temp_ready[j - start], j + 1, true);
             char q[60];
             get_Q(temp_ready[j-start], procs_num, q);
-            if(prem)
-                printf("preempting %c [Q %s]\n", ready[0]->id, q);
-            else
-                printf("added to ready queue [Q %s]\n", q);
+            if (t <= 999)
+            {
+                if(prem)
+                    printf("preempting %c [Q %s]\n", ready[0]->id, q);
+                else
+                    printf("added to ready queue [Q %s]\n", q);
+            }
         }
         sort_queue(ready, ctr_ready, true);
 
@@ -79,17 +83,21 @@ void SRT(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_read
         }
         for (int j = start; j < ctr_ready; j++)
         {
-            printf("time %dms: Process %c (tau %dms) arrived; ", t, ready[j]->id, ready[j]->tau);
+            if (t <= 999)
+                printf("time %dms: Process %c (tau %dms) arrived; ", t, ready[j]->id, ready[j]->tau);
             
             prem = check_preem_from_io(procs, procs_num, ready, j, t, ctr_ready, cs_t);
 
             sort_queue (temp_ready[j - start], j + 1, true);
             char q[60];
-            get_Q(temp_ready[j-start], procs_num, q);            
-            if(prem)
-                printf("preempting %c [Q %s]\n", ready[0]->id, q);
-            else
-                printf("added to ready queue [Q %s]\n", q);
+            get_Q(temp_ready[j-start], procs_num, q);
+            if (t <= 999)
+            {
+                if(prem)
+                    printf("preempting %c [Q %s]\n", ready[0]->id, q);
+                else
+                    printf("added to ready queue [Q %s]\n", q);
+            }            
         }
         sort_queue (ready, ctr_ready, true);
         
