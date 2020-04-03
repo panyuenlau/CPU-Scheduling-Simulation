@@ -7,6 +7,10 @@
 #include <math.h>
 #include <string.h>
 #include <stdbool.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 
 typedef struct
@@ -29,14 +33,18 @@ typedef struct
     int remain_sample_t;       // remaining time of a cpu burst
     int original_burst_t; // keep track of original burst time for processes that are preempted
     bool preempt;      // indicates if the current cpu burst was preempted or not
+
+    // int wait_t;         /* For calculating average wait time in simout*/
+    int wait_t_ctr;     /* For calculating average wait time in simout*/
+    int io_complete_t;
 } Proc;
 
 float alpha; // defined as a global variable for ease
 
-void FCFS(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_ready);
-void SJF(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_ready);
-void SRT(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_ready);
-void RR(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_ready, int slice, char *rr_add);
+void FCFS(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_ready, int fd);
+void SJF(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_ready, int fd);
+void SRT(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_ready, int fd);
+void RR(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_ready, int slice, char *rr_add, int fd);
 
 
 /*Some helper functions*/

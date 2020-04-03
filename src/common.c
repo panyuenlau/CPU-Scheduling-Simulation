@@ -51,6 +51,9 @@ void gen_procs(Proc *procs, int seed, int procs_num, int ub, double lambda)
         procs[i].remain_sample_t = 0;
         procs[i].original_burst_t = -1; // if the original_burst_t stays at -1, meaning no preemption occured to the running process
         procs[i].preempt = false;
+        procs[i].wait_t = 0;
+        procs[i].wait_t_ctr = procs[i].cpu_b;
+        procs[i].io_complete_t = procs[i].arrival_t;
     }
 }
 
@@ -160,6 +163,7 @@ int append_io_to_ready_queue (Proc * ready_procs[], Proc * procs, int procs_num,
         {
             ready_procs[*ctr_ready] = &procs[(int)ready[i].id - 65];
             ready_procs[*ctr_ready]->stat = 2;
+            ready_procs[*ctr_ready]->io_complete_t = t;
             *ctr_ready += 1;
         }
         return idx;
@@ -463,6 +467,14 @@ void print_info(Proc *procs, int procs_num, int ctr_ready)
 
 void cxt_s_in (Proc * proc[], int cs_t, int t)
 {
+    // calculate wait time first
+    if (proc[0]->remain_sample_t == 0 || proc[0]->remain_sample_t == proc[0]->sample_t)
+    {
+        fprintf(stderr, "At time %d, Process %c add wait time = %d\n", t, proc[0]->id,
+                proc[0]->wait_t + (t - proc[0]->arrival_t));
+    }
+    proc[0]->wait_t += (t - proc[0]->arrival_t);
+
     proc[0]->arrival_t = t + cs_t/2;
     proc[0]->stat = 5;
 }
@@ -543,6 +555,9 @@ bool check_preem (Proc *procs, Proc **ready, char q[], int procs_num, int t, int
             // ready[0]: process that needs to be preempted
             // ready[1]: process that will preempt ready[0]
 
+            ready[1]->wait_t += t - ready[1]->io_complete_t + cs_t / 2;
+            fprintf(stderr, "t: %d, Procsss %c, io_complete_t: %d, wait_t: %d\n", 
+                    t, ready[1]->id, ready[1]->io_complete_t, ready[1]->wait_t);
             /* 
             keep track of the original burst in order to correctly calculate next tau
                 -if this cpu burst was never preempted before, the original burst is the sample burst
@@ -585,12 +600,14 @@ bool check_preem_from_io (Proc *procs, int procs_num, Proc **ready, int complete
             {
                 /*
                     procs[i]: process that is being preempted
-                    ready[completed_i]: process that is preempting procs[i]
+                    ready[completed_i]: process that completed I/O burst, and it is preempting procs[i]
                 */
 
                 // context switch ready[completed_i] in cs_t/2
                 ready[completed_i]->stat = 2;
                 ready[completed_i]->arrival_t = t + cs_t / 2;
+
+                ready[completed_i]->wait_t += cs_t / 2;
 
                 /*Add the remaining burst time of the current burst back to the cpu_t*/
                 for (int j = procs[i].cpu_b + 1; j > 0; j--)

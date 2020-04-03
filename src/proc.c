@@ -47,6 +47,14 @@ int main (int argc, char * argv[])
     strcpy(rr_add, "END");
     if (argc > 8)
         strcpy(rr_add, argv[8]);
+    
+    // Creating variables for simout
+    int fd = open ("simout.txt", O_CREAT | O_WRONLY | O_TRUNC, 0600);
+            if (fd < 0)
+                perror("open failed");
+    char buffer[100];
+    float avg_cpu_burst;
+
 
 
     char *scheduling_algos[4] = {"FCFS", "SJF", "SRT", "RR"};
@@ -64,23 +72,61 @@ int main (int argc, char * argv[])
         int ctr_ready = 0;  // number of procs in ready[] array
 #if 1
         if(strcmp(scheduling_algos[k], "FCFS") == 0)
-            FCFS(procs, ready, procs_num, t, cs_t, ctr_ready);
+        {
+            if (write(fd, "Algorithm FCFS\n", strlen("Algorithm FCFS\n")) < 0)
+                perror("write failed");
+            int cpu_burst = 0;
+            int cpu_burst_ctr = 0;
+            for (int i = 0; i < procs_num; i++)
+            {
+                for (int j = 0; j < procs[i].cpu_b; j++)
+                {
+                    cpu_burst += procs[i].cpu_t[j];
+                    cpu_burst_ctr++;
+                }
+            }
+            avg_cpu_burst = (float)cpu_burst / cpu_burst_ctr;
+            int n = snprintf(buffer, 100,
+                            "-- average CPU burst time: %.3f ms\n", avg_cpu_burst);
+            buffer[n] = '\0';
+            if (write(fd, buffer, strlen(buffer)) < 0)
+                perror("write failed");
+            FCFS(procs, ready, procs_num, t, cs_t, ctr_ready, fd);
+        }
 #endif
 
 #if 1
         if (strcmp(scheduling_algos[k], "SJF") == 0)
-            SJF(procs, ready, procs_num, t, cs_t, ctr_ready);
+        {
+            if (write(fd, "Algorithm SJF\n", strlen("Algorithm SJF\n")) < 0)
+                perror("write failed");
+            if (write(fd, buffer, strlen(buffer)) < 0)
+                perror("write failed");
+            SJF(procs, ready, procs_num, t, cs_t, ctr_ready, fd);
+        }
 #endif
 
 #if 1
         if (strcmp(scheduling_algos[k], "SRT") == 0)
-            SRT(procs, ready, procs_num, t, cs_t, ctr_ready);
+        {
+            if (write(fd, "Algorithm SRT\n", strlen("Algorithm SRT\n")) < 0)
+                perror("write failed");
+            if (write(fd, buffer, strlen(buffer)) < 0)
+                perror("write failed");
+            SRT(procs, ready, procs_num, t, cs_t, ctr_ready, fd);
+        }
 #endif
 #if 1
         if (strcmp(scheduling_algos[k], "RR") == 0)
-            RR(procs, ready, procs_num, t, cs_t, ctr_ready, slice, rr_add);
+        {
+            if (write(fd, "Algorithm RR\n", strlen("Algorithm RR\n")) < 0)
+                perror("write failed");
+            if (write(fd, buffer, strlen(buffer)) < 0)
+                perror("write failed");
+            RR(procs, ready, procs_num, t, cs_t, ctr_ready, slice, rr_add, fd);
+        }
 #endif
     }
-
+    close(fd);
     return EXIT_SUCCESS;
 }
