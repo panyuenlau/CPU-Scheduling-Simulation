@@ -58,7 +58,8 @@ int main (int argc, char * argv[])
 
 
     char *scheduling_algos[4] = {"FCFS", "SJF", "SRT", "RR"};
-
+    int cpu_burst = 0;
+    
     for (int k = 0; k < 4; k++)
     {
         Proc procs[procs_num];
@@ -75,7 +76,6 @@ int main (int argc, char * argv[])
         {
             if (write(fd, "Algorithm FCFS\n", strlen("Algorithm FCFS\n")) < 0)
                 perror("write failed");
-            int cpu_burst = 0;
             int cpu_burst_ctr = 0;
             for (int i = 0; i < procs_num; i++)
             {
@@ -91,7 +91,7 @@ int main (int argc, char * argv[])
             buffer[n] = '\0';
             if (write(fd, buffer, strlen(buffer)) < 0)
                 perror("write failed");
-            FCFS(procs, ready, procs_num, t, cs_t, ctr_ready, fd);
+            FCFS(procs, ready, procs_num, t, cs_t, ctr_ready, fd, cpu_burst);
         }
 #endif
 
@@ -102,7 +102,7 @@ int main (int argc, char * argv[])
                 perror("write failed");
             if (write(fd, buffer, strlen(buffer)) < 0)
                 perror("write failed");
-            SJF(procs, ready, procs_num, t, cs_t, ctr_ready, fd);
+            SJF(procs, ready, procs_num, t, cs_t, ctr_ready, fd, cpu_burst);
         }
 #endif
 
@@ -113,7 +113,7 @@ int main (int argc, char * argv[])
                 perror("write failed");
             if (write(fd, buffer, strlen(buffer)) < 0)
                 perror("write failed");
-            SRT(procs, ready, procs_num, t, cs_t, ctr_ready, fd);
+            SRT(procs, ready, procs_num, t, cs_t, ctr_ready, fd, cpu_burst);
         }
 #endif
 #if 1
@@ -123,7 +123,7 @@ int main (int argc, char * argv[])
                 perror("write failed");
             if (write(fd, buffer, strlen(buffer)) < 0)
                 perror("write failed");
-            RR(procs, ready, procs_num, t, cs_t, ctr_ready, slice, rr_add, fd);
+            RR(procs, ready, procs_num, t, cs_t, ctr_ready, slice, rr_add, fd, cpu_burst);
         }
 #endif
     }

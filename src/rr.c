@@ -1,6 +1,6 @@
 #include "proc.h"
 
-void RR(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_ready, int slice, char *rr_add, int fd)
+void RR(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_ready, int slice, char *rr_add, int fd, int cpu_burst)
 {
     // Optional setting rr_add: append return process to the BEGINNING or END
     bool add = true;
@@ -149,18 +149,5 @@ void RR(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_ready
     }
     printf("time %dms: Simulator ended for RR [Q <empty>]\n", --t);
 
-    int wait_t = 0;
-    int wait_t_ctr = 0;
-    for (int i = 0; i < procs_num; i++)
-    {
-        wait_t += procs[i].wait_t;
-        wait_t_ctr += procs[i].wait_t_ctr;
-    }
-    float avg_wait_t = (float)wait_t / wait_t_ctr;
-    char buffer[100];
-    int n = snprintf(buffer, 100,
-                    "-- average wait time: %.3f ms\n", avg_wait_t);
-    buffer[n] = '\0';
-    if (write(fd, buffer, strlen(buffer)) < 0)
-        perror("write failed");
+    print_stat(procs, procs_num, fd, cs_t, cpu_burst);
 }
