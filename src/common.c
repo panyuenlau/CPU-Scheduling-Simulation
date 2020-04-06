@@ -562,7 +562,7 @@ bool check_preem (Proc *procs, Proc **ready, char q[], int procs_num, int t, int
             // ready[0]: process that needs to be preempted
             // ready[1]: process that will preempt ready[0]
 
-            ready[1]->wait_t += t - ready[1]->io_complete_t + cs_t / 2;
+            // ready[1]->wait_t += t - ready[1]->io_complete_t + cs_t / 2;
 #if 0
             fprintf(stderr, "t: %d, Procsss %c, io_complete_t: %d, wait_t: %d\n", 
                     t, ready[1]->id, ready[1]->io_complete_t, ready[1]->wait_t);
@@ -664,8 +664,10 @@ void check_rdy_que(Proc *procs,Proc **ready, int cs_t, int procs_num, int t,  bo
         {
             ready[0]->stat = 2;
 
+            ready[1]->wait_t += t - ready[1]->arrival_t;
             ready[1]->stat = 5;
-            ready[1]->arrival_t = t + 2;
+            ready[1]->arrival_t = t + cs_t / 2;
+            
             
             Proc *temp = ready[0];
             ready[0] = ready[1];
