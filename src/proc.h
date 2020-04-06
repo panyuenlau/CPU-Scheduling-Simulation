@@ -37,14 +37,16 @@ typedef struct
     // int wait_t;         /* For calculating average wait time in simout*/
     int wait_t_ctr;     /* For calculating average wait time in simout*/
     int io_complete_t;
+    int preemption_ctr;
+    int cxt_s_ctr;
 } Proc;
 
 float alpha; // defined as a global variable for ease
 
-void FCFS(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_ready, int fd);
-void SJF(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_ready, int fd);
-void SRT(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_ready, int fd);
-void RR(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_ready, int slice, char *rr_add, int fd);
+void FCFS(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_ready, int fd, int cpu_burst);
+void SJF(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_ready, int fd, int cpu_burst);
+void SRT(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_ready, int fd, int cpu_burst);
+void RR(Proc *procs, Proc **ready, int procs_num, int t, int cs_t, int ctr_ready, int slice, char *rr_add, int fd, int cpu_burst);
 
 
 /*Some helper functions*/
@@ -91,6 +93,8 @@ void check_cpub_context(Proc **ready, int cs_t, int procs_num, int t, int *ctr_r
 bool check_preem (Proc *procs, Proc **ready, char q[], int procs_num, int t, int cs_t, int ctr_ready);
 bool check_preem_from_io (Proc *procs, int procs_num, Proc **ready, int completed_i, int t, int ctr_ready, int cs_t);
 
+
+void print_stat (Proc *procs, int procs_num, int fd, int cs_t, int cpu_burst);
 
 /*helper function for debugging*/
 void print_info(Proc *procs, int procs_num, int ctr_ready);

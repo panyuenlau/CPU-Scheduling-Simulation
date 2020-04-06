@@ -54,6 +54,8 @@ void gen_procs(Proc *procs, int seed, int procs_num, int ub, double lambda)
         procs[i].wait_t = 0;
         procs[i].wait_t_ctr = procs[i].cpu_b;
         procs[i].io_complete_t = procs[i].arrival_t;
+        procs[i].preemption_ctr = 0;
+        procs[i].cxt_s_ctr = 0;
     }
 }
 
@@ -468,21 +470,25 @@ void print_info(Proc *procs, int procs_num, int ctr_ready)
 void cxt_s_in (Proc * proc[], int cs_t, int t)
 {
     // calculate wait time first
+#if 0
     if (proc[0]->remain_sample_t == 0 || proc[0]->remain_sample_t == proc[0]->sample_t)
     {
         fprintf(stderr, "At time %d, Process %c add wait time = %d\n", t, proc[0]->id,
                 proc[0]->wait_t + (t - proc[0]->arrival_t));
     }
+#endif
     proc[0]->wait_t += (t - proc[0]->arrival_t);
 
     proc[0]->arrival_t = t + cs_t/2;
     proc[0]->stat = 5;
+    proc[0]->cxt_s_ctr += 1;
 }
 
 void cxt_s_out (Proc * proc, int cs_t, int t)
 {
     proc->arrival_t = t + cs_t/2;
     proc->stat = 6;
+    // proc->cxt_s_ctr += 1;
 }
 
 int update_est_burst (Proc * proc, int cs_t, int t)
@@ -514,6 +520,7 @@ int RR_check_burst (Proc * ready[], int cs_t, int t, int slice, int procs_num, i
             {
                 char q[60];
                 get_Q(ready, procs_num, q);
+                ready[0]->preemption_ctr += 1;
                 if (t <= 999)
                     printf("time %dms: Time slice expired; process %c preempted with %dms to go [Q %s]\n", 
                 t, ready[0]->id, ready[0]->remain_sample_t, q);
@@ -556,8 +563,12 @@ bool check_preem (Proc *procs, Proc **ready, char q[], int procs_num, int t, int
             // ready[1]: process that will preempt ready[0]
 
             ready[1]->wait_t += t - ready[1]->io_complete_t + cs_t / 2;
+#if 0
             fprintf(stderr, "t: %d, Procsss %c, io_complete_t: %d, wait_t: %d\n", 
                     t, ready[1]->id, ready[1]->io_complete_t, ready[1]->wait_t);
+#endif
+            ready[1]->preemption_ctr += 1;
+
             /* 
             keep track of the original burst in order to correctly calculate next tau
                 -if this cpu burst was never preempted before, the original burst is the sample burst
@@ -577,7 +588,8 @@ bool check_preem (Proc *procs, Proc **ready, char q[], int procs_num, int t, int
 
             ready[0]->stat = 7; 
             ready[0]->arrival_t = t + cs_t / 2;
-
+            ready[0]->cxt_s_ctr += 1;        
+            
             // add the remaining cpu burst back to the cpu_t list to the preempted process
             for (int j = ready[0]->cpu_b + 1; j > 0; j--)
             {
@@ -608,6 +620,8 @@ bool check_preem_from_io (Proc *procs, int procs_num, Proc **ready, int complete
                 ready[completed_i]->arrival_t = t + cs_t / 2;
 
                 ready[completed_i]->wait_t += cs_t / 2;
+
+                ready[completed_i]->preemption_ctr += 1;
 
                 /*Add the remaining burst time of the current burst back to the cpu_t*/
                 for (int j = procs[i].cpu_b + 1; j > 0; j--)
@@ -690,6 +704,10 @@ void check_rdy_que(Proc *procs,Proc **ready, int cs_t, int procs_num, int t,  bo
                     /*Check preemption when the process starts to burst*/
                     check_preem(procs, ready, q, procs_num, t, cs_t, ctr_ready);
                 }
+#if 0
+                fprintf(stderr, "At time %d, Process %c add wait time = %d\n", t, ready[0]->id,
+                        ready[0]->wait_t);
+#endif
             }
             else
             {
@@ -812,4 +830,45 @@ void check_cpub_context(Proc **ready, int cs_t, int procs_num, int t, int *ctr_r
             rm_running_proc(ready, procs_num, ctr_ready);
         }
     }
+}
+
+void print_stat (Proc *procs, int procs_num, int fd, int cs_t, int cpu_burst)
+{
+    int wait_t = 0;
+    int wait_t_ctr = 0;
+    int total_preemptions = 0;
+    int total_ctxt_s = 0;
+    int total_tt_time = 0;
+    for (int i = 0; i < procs_num; i++)
+    {
+        wait_t += procs[i].wait_t;
+        wait_t_ctr += procs[i].wait_t_ctr;
+        total_preemptions += procs[i].preemption_ctr;
+        total_ctxt_s += procs[i].cxt_s_ctr;
+    }
+    
+    total_tt_time = cpu_burst + wait_t + cs_t * (total_preemptions + wait_t_ctr);
+    float avg_tt_time = (float)total_tt_time / wait_t_ctr;
+
+    float avg_wait_t = (float)wait_t / wait_t_ctr;
+    char buffer[100];
+    int n = snprintf(buffer, 100, "-- average wait time: %.3f ms\n", avg_wait_t);
+    buffer[n] = '\0';
+    if (write(fd, buffer, strlen(buffer)) < 0)
+        perror("write failed");
+
+    n = snprintf(buffer, 100, "-- average turnaround time: %.3f ms\n", avg_tt_time);
+    buffer[n] = '\0';
+    if (write(fd, buffer, strlen(buffer)) < 0)
+        perror("write failed");
+
+    n = snprintf(buffer, 100, "-- total number of context switches: %d\n", total_ctxt_s);
+    buffer[n] = '\0';
+    if (write(fd, buffer, strlen(buffer)) < 0)
+        perror("write failed");
+
+    n = snprintf(buffer, 100, "-- total number of preemptions: %d\n", total_preemptions);
+    buffer[n] = '\0';
+    if (write(fd, buffer, strlen(buffer)) < 0)
+        perror("write failed");
 }
