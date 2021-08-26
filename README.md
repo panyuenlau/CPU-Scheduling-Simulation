@@ -1,5 +1,4 @@
-# OS-Project
-Operating Systems Group Project -- **CPU Scheduling Simulation**
+# CPU Scheduling Simulation
 
 This project is a rudimentary simulation of an operating system. The initial focus will be on processes, assumed to be resident in memory, waiting to use the CPU. Memory and the I/O subsystem are not covered in this project.
 
